@@ -1,161 +1,341 @@
-"use client";
+import Link from "next/link";
+import { auth } from "@clerk/nextjs/server";
+import { SignInButton } from "@clerk/nextjs";
+import {
+  ArrowRight,
+  Bot,
+  CircleDollarSign,
+  PiggyBank,
+  ReceiptText,
+  TrendingDown,
+} from "lucide-react";
 
-import { SignInButton, SignedIn, SignedOut, UserButton } from "@clerk/nextjs";
-import Chat from "@/components/chat";
+import { DashboardCharts } from "@/components/dashboard-charts";
+import { QuickAddTransaction } from "@/components/quick-add-transaction";
+import { SakuShell } from "@/components/saku-shell";
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
-  CheckCircle,
-  Zap,
-  Database,
-  Shield,
-  ExternalLink,
-} from "lucide-react";
-import { ThemeToggle } from "@/components/theme-toggle";
-import Image from "next/image";
+  Card,
+  CardContent,
+  CardDescription,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Progress } from "@/components/ui/progress";
+import { formatCurrency, formatPercent, formatShortDate } from "@/lib/format";
+import { getSakuDataset } from "@/lib/saku-data";
 
-export default function Home() {
+function SummaryCard({
+  label,
+  value,
+  hint,
+}: {
+  label: string;
+  value: string;
+  hint: string;
+}) {
+  return (
+    <Card className="rounded-[1.5rem] border-border/70">
+      <CardHeader className="pb-3">
+        <CardDescription>{label}</CardDescription>
+        <CardTitle className="text-2xl">{value}</CardTitle>
+      </CardHeader>
+      <CardContent>
+        <p className="text-muted-foreground text-sm">{hint}</p>
+      </CardContent>
+    </Card>
+  );
+}
+
+function SignedOutLanding() {
+  return (
+    <div className="min-h-screen px-4 py-6 sm:px-6">
+      <div className="mx-auto max-w-6xl">
+        <div className="overflow-hidden rounded-[2rem] border border-border/70 bg-card/75 shadow-lg backdrop-blur">
+          <div className="grid gap-8 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-12">
+            <div className="space-y-6">
+              <Badge variant="secondary">MVP Mahasiswa</Badge>
+              <div className="space-y-4">
+                <h1 className="font-display max-w-3xl text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
+                  Satu dashboard buat catat uang saku, jaga budget, dan tanya AI.
+                </h1>
+                <p className="text-muted-foreground max-w-2xl text-base leading-relaxed sm:text-lg">
+                  Saku AI menggabungkan pencatatan transaksi, budget tracker,
+                  goals, dan chat assistant supaya mahasiswa bisa ambil keputusan
+                  finansial yang lebih cepat dan masuk akal.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap gap-3">
+                <SignInButton mode="modal">
+                  <Button className="h-11 px-6">
+                    Mulai sekarang
+                    <ArrowRight className="ml-2 h-4 w-4" />
+                  </Button>
+                </SignInButton>
+                <Button asChild className="h-11 px-6" variant="outline">
+                  <Link href="#fitur">Lihat fitur inti</Link>
+                </Button>
+              </div>
+
+              <div className="grid gap-3 sm:grid-cols-3">
+                {[
+                  {
+                    title: "Transaksi cepat",
+                    text: "Tambah pemasukan dan pengeluaran dalam beberapa klik.",
+                    icon: ReceiptText,
+                  },
+                  {
+                    title: "Budget mahasiswa",
+                    text: "Pantau kos, makan, transport, dan nongkrong per bulan.",
+                    icon: PiggyBank,
+                  },
+                  {
+                    title: "Saran AI",
+                    text: "Tanya strategi hemat dengan konteks data keuanganmu.",
+                    icon: Bot,
+                  },
+                ].map((item) => {
+                  const Icon = item.icon;
+
+                  return (
+                    <Card
+                      key={item.title}
+                      className="rounded-[1.5rem] border-border/70 bg-background/60"
+                    >
+                      <CardHeader className="gap-3">
+                        <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-2xl">
+                          <Icon className="h-5 w-5" />
+                        </div>
+                        <div>
+                          <CardTitle className="text-base">{item.title}</CardTitle>
+                          <CardDescription className="mt-1 text-sm">
+                            {item.text}
+                          </CardDescription>
+                        </div>
+                      </CardHeader>
+                    </Card>
+                  );
+                })}
+              </div>
+            </div>
+
+            <Card className="rounded-[1.75rem] border-border/70 bg-background/65">
+              <CardHeader>
+                <CardTitle>Gambaran MVP</CardTitle>
+                <CardDescription>
+                  Scope mengikuti `tech_doc.md` untuk dashboard finansial mahasiswa.
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-4">
+                {[
+                  {
+                    label: "Catat transaksi manual + siap untuk import CSV",
+                    value: "01",
+                  },
+                  {
+                    label: "Pantau saldo, tren bulanan, dan progres budget",
+                    value: "02",
+                  },
+                  {
+                    label: "Kelola akun, recurring cost, dan target tabungan",
+                    value: "03",
+                  },
+                  {
+                    label: "Chat AI berbasis ringkasan keuangan pengguna",
+                    value: "04",
+                  },
+                ].map((item) => (
+                  <div
+                    key={item.value}
+                    className="flex items-start gap-4 rounded-[1.25rem] border border-border/60 bg-card/80 px-4 py-4"
+                  >
+                    <div className="text-primary font-display text-2xl">
+                      {item.value}
+                    </div>
+                    <p className="text-sm leading-relaxed">{item.label}</p>
+                  </div>
+                ))}
+              </CardContent>
+            </Card>
+          </div>
+        </div>
+
+        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" id="fitur">
+          {[
+            {
+              title: "Saldo terpusat",
+              text: "Gabungkan uang saku, freelance, dan tabungan dalam satu layar.",
+              icon: CircleDollarSign,
+            },
+            {
+              title: "Alert budget",
+              text: "Dapat notifikasi ketika kategori menyentuh 90% limit.",
+              icon: TrendingDown,
+            },
+            {
+              title: "Kategori khas mahasiswa",
+              text: "Kos, makan, akademik, transport, dan nongkrong siap pakai.",
+              icon: ReceiptText,
+            },
+            {
+              title: "Goal tracker",
+              text: "Pantau progres target seperti beli laptop atau dana darurat.",
+              icon: PiggyBank,
+            },
+          ].map((item) => {
+            const Icon = item.icon;
+
+            return (
+              <Card key={item.title} className="rounded-[1.5rem] border-border/70">
+                <CardHeader>
+                  <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-2xl">
+                    <Icon className="h-5 w-5" />
+                  </div>
+                  <CardTitle className="mt-4 text-lg">{item.title}</CardTitle>
+                  <CardDescription>{item.text}</CardDescription>
+                </CardHeader>
+              </Card>
+            );
+          })}
+        </section>
+      </div>
+    </div>
+  );
+}
+
+export default async function Home() {
+  const { userId } = await auth();
+
+  if (!userId) {
+    return <SignedOutLanding />;
+  }
+
+  const dataset = await getSakuDataset();
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-indigo-50 via-white to-cyan-50 dark:from-gray-900 dark:via-gray-800 dark:to-gray-900">
-      {/* Hero Section */}
-      <div className="text-center py-12 sm:py-16 relative px-4">
-        <div className="absolute top-4 right-4 sm:top-6 sm:right-6">
-          <div className="flex items-center gap-2 sm:gap-3">
-            <ThemeToggle />
-            <SignedOut>
-              <SignInButton>
-                <Button size="sm" className="text-xs sm:text-sm">
-                  Sign In
-                </Button>
-              </SignInButton>
-            </SignedOut>
-            <SignedIn>
-              <UserButton />
-            </SignedIn>
-          </div>
-        </div>
-
-        <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4 mb-4">
-          <Image
-            src="/saku-ai-logo.png"
-            alt="Saku AI Logo"
-            width={50}
-            height={50}
-            className="rounded-xl sm:w-[60px] sm:h-[60px]"
-          />
-          <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold bg-gradient-to-r from-blue-600 via-blue-500 to-blue-400 bg-clip-text text-transparent">
-            Saku AI
-          </h1>
-        </div>
-        <p className="text-lg sm:text-xl text-muted-foreground max-w-2xl mx-auto px-4">
-          Build faster with your AI coding agent
-        </p>
+    <SakuShell
+      actions={
+        <>
+          <Button asChild variant="outline">
+            <Link href="/transactions">Lihat transaksi</Link>
+          </Button>
+          <Button asChild>
+            <Link href="/chat">Buka chat AI</Link>
+          </Button>
+        </>
+      }
+      mode={dataset.mode}
+      subtitle="Pantau arus kas, cek budget kritis, dan catat transaksi baru tanpa pindah context."
+      title="Dashboard Keuangan"
+      userName={dataset.userName}
+    >
+      <div className="grid gap-4 xl:grid-cols-4">
+        <SummaryCard
+          hint={`Periode aktif ${dataset.periodLabel}`}
+          label="Saldo bersih"
+          value={formatCurrency(dataset.summary.balance)}
+        />
+        <SummaryCard
+          hint={`${dataset.summary.transactionCount} transaksi bulan ini`}
+          label="Pemasukan bulan ini"
+          value={formatCurrency(dataset.summary.monthlyIncome)}
+        />
+        <SummaryCard
+          hint="Total pengeluaran bulan berjalan"
+          label="Pengeluaran bulan ini"
+          value={formatCurrency(dataset.summary.monthlyExpenses)}
+        />
+        <SummaryCard
+          hint="Semakin tinggi, semakin banyak sisa dana"
+          label="Savings rate"
+          value={formatPercent(dataset.summary.savingsRate)}
+        />
       </div>
 
-      <main className="container mx-auto px-4 sm:px-6 pb-12 sm:pb-8 max-w-5xl">
-        <div className="text-center mb-8">
-          <div className="text-4xl sm:text-5xl mb-2">⚠️</div>
-          <div className="font-bold text-lg sm:text-xl mb-1">Setup Required</div>
-          <div className="text-sm sm:text-base text-muted-foreground">
-            Add environment variables to get started
-          </div>
-        </div>
-
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4 mb-6">
-          {/* Clerk */}
-          <div className="text-center p-3 sm:p-4 rounded-lg bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-blue-900/10 dark:to-indigo-900/10">
-            <div className="flex justify-center mb-3">
-              <Shield className="w-6 h-6 sm:w-8 sm:h-8 text-blue-500" />
-            </div>
-            <div className="font-semibold mb-2 text-sm sm:text-base">
-              Clerk Auth
-            </div>
-            <div className="text-xs text-muted-foreground mb-2">
-              <div className="font-mono bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded mb-1">NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY</div>
-              <div className="font-mono bg-blue-100 dark:bg-blue-800 px-2 py-1 rounded">CLERK_SECRET_KEY</div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                window.open("https://dashboard.clerk.com", "_blank")
-              }
-              className="w-full text-xs sm:text-sm"
-            >
-              <ExternalLink className="w-3 h-3 mr-1" />
-              Dashboard
-            </Button>
-          </div>
-
-          {/* Supabase */}
-          <div className="text-center p-3 sm:p-4 rounded-lg bg-gradient-to-br from-green-50 to-emerald-50 dark:from-green-900/10 dark:to-emerald-900/10">
-            <div className="flex justify-center mb-3">
-              <Database className="w-6 h-6 sm:w-8 sm:h-8 text-green-500" />
-            </div>
-            <div className="font-semibold mb-2 text-sm sm:text-base">
-              Supabase DB
-            </div>
-            <div className="text-xs text-muted-foreground mb-2">
-              <div className="font-mono bg-green-100 dark:bg-green-800 px-2 py-1 rounded mb-1">NEXT_PUBLIC_SUPABASE_URL</div>
-              <div className="font-mono bg-green-100 dark:bg-green-800 px-2 py-1 rounded">NEXT_PUBLIC_SUPABASE_ANON_KEY</div>
-            </div>
-            <Button
-              size="sm"
-              variant="outline"
-              onClick={() =>
-                window.open("https://supabase.com/dashboard", "_blank")
-              }
-              className="w-full text-xs sm:text-sm"
-            >
-              <ExternalLink className="w-3 h-3 mr-1" />
-              Dashboard
-            </Button>
-          </div>
-
-          {/* AI */}
-          <div className="text-center p-3 sm:p-4 rounded-lg bg-gradient-to-br from-purple-50 to-pink-50 dark:from-purple-900/10 dark:to-pink-900/10 sm:col-span-2 md:col-span-1">
-            <div className="flex justify-center mb-3">
-              <Zap className="w-6 h-6 sm:w-8 sm:h-8 text-purple-500" />
-            </div>
-            <div className="font-semibold mb-2 text-sm sm:text-base">
-              AI SDK
-            </div>
-            <div className="text-xs text-muted-foreground mb-2">
-              <div className="font-mono bg-purple-100 dark:bg-purple-800 px-2 py-1 rounded mb-1">OPENAI_API_KEY</div>
-              <div className="font-mono bg-purple-100 dark:bg-purple-800 px-2 py-1 rounded">ANTHROPIC_API_KEY</div>
-            </div>
-            <div className="grid grid-cols-2 gap-1 sm:gap-2">
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  window.open("https://platform.openai.com", "_blank")
-                }
-                className="text-xs px-1 sm:px-2"
+      {dataset.alerts.length ? (
+        <Card className="rounded-[1.5rem] border-border/70">
+          <CardHeader>
+            <CardTitle>Alert Budget</CardTitle>
+            <CardDescription>
+              Kategori berikut sudah mendekati atau melewati limit bulanan.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="grid gap-4 lg:grid-cols-2">
+            {dataset.alerts.map((alert) => (
+              <div
+                key={alert.id}
+                className="rounded-[1.25rem] border border-border/60 bg-background/60 p-4"
               >
-                OpenAI
-              </Button>
-              <Button
-                size="sm"
-                variant="outline"
-                onClick={() =>
-                  window.open("https://console.anthropic.com", "_blank")
-                }
-                className="text-xs px-1 sm:px-2"
-              >
-                Anthropic
-              </Button>
-            </div>
-          </div>
-        </div>
+                <div className="mb-2 flex items-center justify-between gap-3">
+                  <p className="font-medium">{alert.categoryName}</p>
+                  <Badge
+                    variant={alert.severity === "danger" ? "destructive" : "secondary"}
+                  >
+                    {Math.round(alert.progress * 100)}%
+                  </Badge>
+                </div>
+                <Progress value={Math.min(alert.progress * 100, 100)} />
+                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                  {alert.message}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      ) : null}
 
-        {/* Chat Section */}
-        <SignedIn>
-          <div className="mt-6 sm:mt-8">
-            <Chat />
-          </div>
-        </SignedIn>
-      </main>
-    </div>
+      <DashboardCharts
+        categoryBreakdown={dataset.categoryBreakdown}
+        monthlyTrend={dataset.monthlyTrend}
+      />
+
+      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+        <QuickAddTransaction
+          accounts={dataset.accounts}
+          canPersist={dataset.canPersist}
+          categories={dataset.categories}
+        />
+
+        <Card className="rounded-[1.5rem] border-border/70">
+          <CardHeader>
+            <CardTitle>Transaksi Terbaru</CardTitle>
+            <CardDescription>
+              Ringkasan aktivitas finansial yang paling baru masuk.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            {dataset.recentTransactions.map((transaction) => (
+              <div
+                key={transaction.id}
+                className="flex items-center justify-between rounded-[1.25rem] border border-border/60 bg-background/60 px-4 py-3"
+              >
+                <div>
+                  <p className="font-medium">
+                    {transaction.merchant ?? transaction.description ?? "Transaksi"}
+                  </p>
+                  <p className="text-muted-foreground text-sm">
+                    {transaction.categoryName ?? "Tanpa kategori"} -{" "}
+                    {transaction.accountName ?? "Tanpa akun"} -{" "}
+                    {formatShortDate(transaction.date)}
+                  </p>
+                </div>
+                <p
+                  className={
+                    transaction.type === "credit"
+                      ? "font-medium text-primary"
+                      : "font-medium text-foreground"
+                  }
+                >
+                  {transaction.type === "credit" ? "+" : "-"}
+                  {formatCurrency(transaction.amount)}
+                </p>
+              </div>
+            ))}
+          </CardContent>
+        </Card>
+      </div>
+    </SakuShell>
   );
 }

@@ -1,5 +1,5 @@
 {
-  "name": "Saku AI",
+  "name": "CodeGuide Starter",
   "build": {
     "dockerfile": "Dockerfile",
     "args": {

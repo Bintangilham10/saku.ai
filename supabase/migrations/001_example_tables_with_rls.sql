@@ -1,180 +1,311 @@
--- Example migration showing RLS implementation for Clerk + Supabase integration
--- This creates sample tables with proper RLS policies based on Clerk user IDs
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
+CREATE EXTENSION IF NOT EXISTS "pg_trgm";
 
--- Create a posts table as an example
-CREATE TABLE IF NOT EXISTS public.posts (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT,
-  user_id TEXT NOT NULL, -- This will store the Clerk user ID
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create a comments table as another example
-CREATE TABLE IF NOT EXISTS public.comments (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  post_id UUID NOT NULL REFERENCES public.posts(id) ON DELETE CASCADE,
-  content TEXT NOT NULL,
-  user_id TEXT NOT NULL, -- This will store the Clerk user ID
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Create a profiles table for user-specific data
-CREATE TABLE IF NOT EXISTS public.profiles (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id TEXT UNIQUE NOT NULL, -- This will store the Clerk user ID
-  bio TEXT,
-  website TEXT,
-  avatar_url TEXT,
-  is_public BOOLEAN DEFAULT false,
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
-);
-
--- Enable Row Level Security on all tables
-ALTER TABLE public.posts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.comments ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
-
--- RLS Policies for posts table
--- Users can read all posts (public access)
-CREATE POLICY "Anyone can read posts" ON public.posts
-  FOR SELECT USING (true);
-
--- Users can only insert posts as themselves
-CREATE POLICY "Users can insert own posts" ON public.posts
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'sub' = user_id);
-
--- Users can only update their own posts
-CREATE POLICY "Users can update own posts" ON public.posts
-  FOR UPDATE USING (auth.jwt() ->> 'sub' = user_id);
-
--- Users can only delete their own posts
-CREATE POLICY "Users can delete own posts" ON public.posts
-  FOR DELETE USING (auth.jwt() ->> 'sub' = user_id);
-
--- RLS Policies for comments table
--- Users can read all comments (public access)
-CREATE POLICY "Anyone can read comments" ON public.comments
-  FOR SELECT USING (true);
-
--- Users can only insert comments as themselves
-CREATE POLICY "Users can insert own comments" ON public.comments
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'sub' = user_id);
-
--- Users can only update their own comments
-CREATE POLICY "Users can update own comments" ON public.comments
-  FOR UPDATE USING (auth.jwt() ->> 'sub' = user_id);
-
--- Users can only delete their own comments
-CREATE POLICY "Users can delete own comments" ON public.comments
-  FOR DELETE USING (auth.jwt() ->> 'sub' = user_id);
-
--- RLS Policies for profiles table
--- Users can read public profiles or their own profile
-CREATE POLICY "Users can read public profiles or own profile" ON public.profiles
-  FOR SELECT USING (
-    is_public = true OR auth.jwt() ->> 'sub' = user_id
-  );
-
--- Users can only insert their own profile
-CREATE POLICY "Users can insert own profile" ON public.profiles
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'sub' = user_id);
-
--- Users can only update their own profile
-CREATE POLICY "Users can update own profile" ON public.profiles
-  FOR UPDATE USING (auth.jwt() ->> 'sub' = user_id);
-
--- Users can only delete their own profile
-CREATE POLICY "Users can delete own profile" ON public.profiles
-  FOR DELETE USING (auth.jwt() ->> 'sub' = user_id);
-
--- Create indexes for better performance
-CREATE INDEX IF NOT EXISTS idx_posts_user_id ON public.posts(user_id);
-CREATE INDEX IF NOT EXISTS idx_posts_created_at ON public.posts(created_at DESC);
-CREATE INDEX IF NOT EXISTS idx_comments_post_id ON public.comments(post_id);
-CREATE INDEX IF NOT EXISTS idx_comments_user_id ON public.comments(user_id);
-CREATE INDEX IF NOT EXISTS idx_profiles_user_id ON public.profiles(user_id);
-
--- Create updated_at triggers
-CREATE OR REPLACE FUNCTION update_updated_at_column()
+CREATE OR REPLACE FUNCTION public.update_updated_at_column()
 RETURNS TRIGGER AS $$
 BEGIN
   NEW.updated_at = NOW();
   RETURN NEW;
 END;
-$$ language 'plpgsql';
+$$ LANGUAGE plpgsql;
 
-CREATE TRIGGER update_posts_updated_at
-  BEFORE UPDATE ON public.posts
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+CREATE OR REPLACE FUNCTION public.requesting_clerk_id()
+RETURNS text AS $$
+  SELECT COALESCE(auth.jwt() ->> 'sub', auth.uid()::text);
+$$ LANGUAGE sql STABLE;
 
-CREATE TRIGGER update_comments_updated_at
-  BEFORE UPDATE ON public.comments
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
-CREATE TRIGGER update_profiles_updated_at
-  BEFORE UPDATE ON public.profiles
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
-
--- Example of more complex RLS policy with additional conditions
--- Create a private_notes table that's completely private to each user
-CREATE TABLE IF NOT EXISTS public.private_notes (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  title TEXT NOT NULL,
-  content TEXT,
-  user_id TEXT NOT NULL, -- This will store the Clerk user ID
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.app_users (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  clerk_id text UNIQUE NOT NULL,
+  email text,
+  display_name text,
+  preferred_currency varchar(3) NOT NULL DEFAULT 'IDR',
+  timezone text NOT NULL DEFAULT 'Asia/Jakarta',
+  settings jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE public.private_notes ENABLE ROW LEVEL SECURITY;
+CREATE OR REPLACE FUNCTION public.requesting_app_user_id()
+RETURNS uuid AS $$
+  SELECT id
+  FROM public.app_users
+  WHERE clerk_id = public.requesting_clerk_id()
+  LIMIT 1;
+$$ LANGUAGE sql STABLE;
 
--- Private notes can only be accessed by the owner
-CREATE POLICY "Users can only access own private notes" ON public.private_notes
-  FOR ALL USING (auth.jwt() ->> 'sub' = user_id);
-
--- Example of collaborative table with shared access
-CREATE TABLE IF NOT EXISTS public.collaborations (
-  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  name TEXT NOT NULL,
-  description TEXT,
-  owner_id TEXT NOT NULL, -- Clerk user ID of the owner
-  collaborators TEXT[] DEFAULT '{}', -- Array of Clerk user IDs
-  created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-  updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+CREATE TABLE IF NOT EXISTS public.accounts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  type text NOT NULL,
+  currency varchar(3) NOT NULL DEFAULT 'IDR',
+  institution text,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
 );
 
-ALTER TABLE public.collaborations ENABLE ROW LEVEL SECURITY;
+CREATE TABLE IF NOT EXISTS public.categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  parent_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  auto_rules jsonb NOT NULL DEFAULT '{}'::jsonb,
+  color varchar(7),
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
 
--- Owners and collaborators can read
-CREATE POLICY "Owners and collaborators can read collaborations" ON public.collaborations
-  FOR SELECT USING (
-    auth.jwt() ->> 'sub' = owner_id OR 
-    auth.jwt() ->> 'sub' = ANY(collaborators)
+CREATE TABLE IF NOT EXISTS public.transactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE SET NULL,
+  amount numeric(14,2) NOT NULL,
+  currency varchar(3) NOT NULL DEFAULT 'IDR',
+  type text NOT NULL,
+  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  merchant text,
+  description text,
+  date date NOT NULL,
+  status text NOT NULL DEFAULT 'cleared',
+  imported boolean NOT NULL DEFAULT false,
+  external_id text,
+  tags text[] NOT NULL DEFAULT '{}',
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.budgets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  period text NOT NULL DEFAULT 'bulanan',
+  limit_amount numeric(14,2) NOT NULL,
+  start_date date,
+  end_date date,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.goals (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  name text NOT NULL,
+  target_amount numeric(14,2) NOT NULL,
+  current_amount numeric(14,2) NOT NULL DEFAULT 0,
+  target_date date,
+  note text,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.recurring_rules (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE SET NULL,
+  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  amount numeric(14,2) NOT NULL,
+  currency varchar(3) NOT NULL DEFAULT 'IDR',
+  cron_expr text,
+  next_occurrence timestamptz,
+  active boolean NOT NULL DEFAULT true,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.ai_conversations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  title text,
+  context jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.ai_messages (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  conversation_id uuid NOT NULL REFERENCES public.ai_conversations(id) ON DELETE CASCADE,
+  role text NOT NULL,
+  content text NOT NULL,
+  metadata jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE TABLE IF NOT EXISTS public.imports (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid NOT NULL REFERENCES public.app_users(id) ON DELETE CASCADE,
+  filename text NOT NULL,
+  status text NOT NULL DEFAULT 'uploaded',
+  mapping jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  processed_at timestamptz
+);
+
+CREATE TABLE IF NOT EXISTS public.audit_logs (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id uuid REFERENCES public.app_users(id) ON DELETE SET NULL,
+  table_name text NOT NULL,
+  row_id uuid,
+  action text NOT NULL,
+  payload jsonb NOT NULL DEFAULT '{}'::jsonb,
+  created_at timestamptz NOT NULL DEFAULT now()
+);
+
+CREATE INDEX IF NOT EXISTS idx_app_users_clerk_id ON public.app_users(clerk_id);
+CREATE INDEX IF NOT EXISTS idx_accounts_user_id ON public.accounts(user_id);
+CREATE INDEX IF NOT EXISTS idx_categories_user_id ON public.categories(user_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_user_date ON public.transactions(user_id, date DESC);
+CREATE INDEX IF NOT EXISTS idx_transactions_account_id ON public.transactions(account_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_category_id ON public.transactions(category_id);
+CREATE INDEX IF NOT EXISTS idx_transactions_tags ON public.transactions USING gin(tags);
+CREATE INDEX IF NOT EXISTS idx_budgets_user_id ON public.budgets(user_id);
+CREATE INDEX IF NOT EXISTS idx_goals_user_id ON public.goals(user_id);
+CREATE INDEX IF NOT EXISTS idx_recurring_rules_user_id ON public.recurring_rules(user_id);
+CREATE INDEX IF NOT EXISTS idx_ai_conversations_user_id ON public.ai_conversations(user_id);
+CREATE INDEX IF NOT EXISTS idx_imports_user_id ON public.imports(user_id);
+CREATE INDEX IF NOT EXISTS idx_audit_logs_user_id ON public.audit_logs(user_id);
+
+DROP TRIGGER IF EXISTS update_app_users_updated_at ON public.app_users;
+CREATE TRIGGER update_app_users_updated_at
+BEFORE UPDATE ON public.app_users
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_accounts_updated_at ON public.accounts;
+CREATE TRIGGER update_accounts_updated_at
+BEFORE UPDATE ON public.accounts
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_categories_updated_at ON public.categories;
+CREATE TRIGGER update_categories_updated_at
+BEFORE UPDATE ON public.categories
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_transactions_updated_at ON public.transactions;
+CREATE TRIGGER update_transactions_updated_at
+BEFORE UPDATE ON public.transactions
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_budgets_updated_at ON public.budgets;
+CREATE TRIGGER update_budgets_updated_at
+BEFORE UPDATE ON public.budgets
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_goals_updated_at ON public.goals;
+CREATE TRIGGER update_goals_updated_at
+BEFORE UPDATE ON public.goals
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_recurring_rules_updated_at ON public.recurring_rules;
+CREATE TRIGGER update_recurring_rules_updated_at
+BEFORE UPDATE ON public.recurring_rules
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+DROP TRIGGER IF EXISTS update_ai_conversations_updated_at ON public.ai_conversations;
+CREATE TRIGGER update_ai_conversations_updated_at
+BEFORE UPDATE ON public.ai_conversations
+FOR EACH ROW
+EXECUTE FUNCTION public.update_updated_at_column();
+
+ALTER TABLE public.app_users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.budgets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.goals ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.recurring_rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.ai_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.imports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.audit_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Users manage own app_user" ON public.app_users;
+CREATE POLICY "Users manage own app_user" ON public.app_users
+  FOR ALL
+  USING (clerk_id = public.requesting_clerk_id())
+  WITH CHECK (clerk_id = public.requesting_clerk_id());
+
+DROP POLICY IF EXISTS "Users manage own accounts" ON public.accounts;
+CREATE POLICY "Users manage own accounts" ON public.accounts
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own categories" ON public.categories;
+CREATE POLICY "Users manage own categories" ON public.categories
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own transactions" ON public.transactions;
+CREATE POLICY "Users manage own transactions" ON public.transactions
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own budgets" ON public.budgets;
+CREATE POLICY "Users manage own budgets" ON public.budgets
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own goals" ON public.goals;
+CREATE POLICY "Users manage own goals" ON public.goals
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own recurring rules" ON public.recurring_rules;
+CREATE POLICY "Users manage own recurring rules" ON public.recurring_rules
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own ai conversations" ON public.ai_conversations;
+CREATE POLICY "Users manage own ai conversations" ON public.ai_conversations
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
+
+DROP POLICY IF EXISTS "Users manage own ai messages" ON public.ai_messages;
+CREATE POLICY "Users manage own ai messages" ON public.ai_messages
+  FOR ALL
+  USING (
+    EXISTS (
+      SELECT 1
+      FROM public.ai_conversations conversation
+      WHERE conversation.id = ai_messages.conversation_id
+        AND conversation.user_id = public.requesting_app_user_id()
+    )
+  )
+  WITH CHECK (
+    EXISTS (
+      SELECT 1
+      FROM public.ai_conversations conversation
+      WHERE conversation.id = ai_messages.conversation_id
+        AND conversation.user_id = public.requesting_app_user_id()
+    )
   );
 
--- Only owners can insert
-CREATE POLICY "Owners can insert collaborations" ON public.collaborations
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'sub' = owner_id);
+DROP POLICY IF EXISTS "Users manage own imports" ON public.imports;
+CREATE POLICY "Users manage own imports" ON public.imports
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());
 
--- Only owners can update
-CREATE POLICY "Owners can update collaborations" ON public.collaborations
-  FOR UPDATE USING (auth.jwt() ->> 'sub' = owner_id);
-
--- Only owners can delete
-CREATE POLICY "Owners can delete collaborations" ON public.collaborations
-  FOR DELETE USING (auth.jwt() ->> 'sub' = owner_id);
-
-CREATE INDEX IF NOT EXISTS idx_collaborations_owner_id ON public.collaborations(owner_id);
-CREATE INDEX IF NOT EXISTS idx_collaborations_collaborators ON public.collaborations USING GIN(collaborators);
-
-CREATE TRIGGER update_collaborations_updated_at
-  BEFORE UPDATE ON public.collaborations
-  FOR EACH ROW
-  EXECUTE FUNCTION update_updated_at_column();
+DROP POLICY IF EXISTS "Users manage own audit logs" ON public.audit_logs;
+CREATE POLICY "Users manage own audit logs" ON public.audit_logs
+  FOR ALL
+  USING (user_id = public.requesting_app_user_id())
+  WITH CHECK (user_id = public.requesting_app_user_id());

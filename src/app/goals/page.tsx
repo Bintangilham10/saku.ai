@@ -1,6 +1,7 @@
-import { CalendarDays, Repeat } from "lucide-react";
+import { CalendarDays, Repeat, Sparkles } from "lucide-react";
 
 import { SakuShell } from "@/components/saku-shell";
+import { Badge } from "@/components/ui/badge";
 import {
   Card,
   CardContent,
@@ -101,6 +102,57 @@ export default async function GoalsPage() {
           </CardContent>
         </Card>
       </div>
+
+      <Card className="rounded-[1.5rem] border-border/70">
+        <CardHeader>
+          <div className="flex items-center gap-2">
+            <Sparkles className="text-primary h-4 w-4" />
+            <CardTitle>Recurring Terdeteksi Otomatis</CardTitle>
+          </div>
+          <CardDescription>
+            Pola pengeluaran berulang yang ditemukan dari riwayat transaksi.
+            Konfirmasi untuk dijadikan recurring rule resmi.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-3">
+          {dataset.detectedRecurring.length === 0 ? (
+            <p className="text-muted-foreground text-sm">
+              Belum ada pola recurring yang cukup kuat. Catat lebih banyak
+              transaksi agar pola terdeteksi.
+            </p>
+          ) : (
+            dataset.detectedRecurring.map((item) => (
+              <div
+                key={item.key}
+                className="rounded-[1.25rem] border border-border/60 bg-background/60 px-4 py-4"
+              >
+                <div className="flex items-center justify-between gap-3">
+                  <div>
+                    <div className="flex flex-wrap items-center gap-2">
+                      <p className="font-medium">{item.merchantSample}</p>
+                      <Badge variant="secondary">Auto-detected</Badge>
+                      <Badge variant="outline">{item.cadence}</Badge>
+                    </div>
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      {item.categoryName ?? "Tanpa kategori"} -{" "}
+                      {item.occurrences} kejadian, interval ~{item.intervalDays}{" "}
+                      hari
+                    </p>
+                  </div>
+                  <p className="font-medium">{formatCurrency(item.amount)}</p>
+                </div>
+                <div className="text-muted-foreground mt-3 flex items-center gap-2 text-sm">
+                  <CalendarDays className="h-4 w-4" />
+                  <span>
+                    Berikutnya {formatShortDate(item.nextOccurrence)} - confidence{" "}
+                    {Math.round(item.confidence * 100)}%
+                  </span>
+                </div>
+              </div>
+            ))
+          )}
+        </CardContent>
+      </Card>
     </SakuShell>
   );
 }

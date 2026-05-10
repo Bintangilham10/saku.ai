@@ -11,6 +11,7 @@ import {
 } from "lucide-react";
 
 import { DashboardCharts } from "@/components/dashboard-charts";
+import { ForecastCard } from "@/components/forecast-card";
 import { QuickAddTransaction } from "@/components/quick-add-transaction";
 import { SakuShell } from "@/components/saku-shell";
 import { Badge } from "@/components/ui/badge";
@@ -231,7 +232,7 @@ export default async function Home() {
       title="Dashboard Keuangan"
       userName={dataset.userName}
     >
-      <div className="grid gap-4 xl:grid-cols-4">
+      <div className="grid gap-4 xl:grid-cols-4 2xl:grid-cols-5">
         <SummaryCard
           hint={`Periode aktif ${dataset.periodLabel}`}
           label="Saldo bersih"
@@ -252,6 +253,7 @@ export default async function Home() {
           label="Savings rate"
           value={formatPercent(dataset.summary.savingsRate)}
         />
+        <ForecastCard forecast={dataset.forecast} />
       </div>
 
       {dataset.alerts.length ? (

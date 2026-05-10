@@ -130,6 +130,8 @@ export type SakuDataset = {
   monthlyTrend: MonthlyTrend[];
   categoryBreakdown: CategoryBreakdown[];
   recurringItems: RecurringItem[];
+  detectedRecurring: import("@/lib/ml/types").RecurringCandidate[];
+  forecast: import("@/lib/ml/types").ForecastResult;
   aiSummary: string;
 };
 

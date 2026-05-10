@@ -23,6 +23,9 @@ import {
   demoRecurringItems,
   demoTransactions,
 } from "@/lib/saku-demo";
+import { detectRecurringTransactions } from "@/lib/ml/recurring-detector";
+import { forecastEndOfMonth } from "@/lib/ml/forecast";
+import type { ForecastResult, RecurringCandidate } from "@/lib/ml/types";
 import type {
   Account,
   AppUserProfile,
@@ -298,6 +301,8 @@ function buildAiSummary(
   categoryBreakdown: CategoryBreakdown[],
   goals: Goal[],
   recurringItems: RecurringItem[],
+  forecast: ForecastResult,
+  detectedRecurring: RecurringCandidate[],
 ) {
   const topCategories = categoryBreakdown
     .slice(0, 3)
@@ -312,12 +317,27 @@ function buildAiSummary(
   const activeGoal = goals[0];
   const warningBudget = budgets.find((budget) => budget.progress >= 0.9);
 
+  const detectedLine =
+    detectedRecurring.length > 0
+      ? detectedRecurring
+          .slice(0, 3)
+          .map(
+            (item) =>
+              `${item.merchantSample} Rp ${item.amount.toLocaleString("id-ID")} (${item.cadence}, jatuh tempo ${item.nextOccurrence})`,
+          )
+          .join(", ")
+      : "Belum ada pola recurring terdeteksi";
+
+  const forecastLine = `Proyeksi saldo akhir bulan (${forecast.horizonDate}, ${forecast.daysRemaining} hari lagi, mode ${forecast.mode}): Rp ${forecast.predictedBalance.toLocaleString("id-ID")} (rentang Rp ${forecast.lower.toLocaleString("id-ID")} - Rp ${forecast.upper.toLocaleString("id-ID")})`;
+
   return [
     `User summary (${format(new Date(), "MMMM yyyy")}):`,
     `Total Pemasukan/Uang Saku: Rp ${summary.monthlyIncome.toLocaleString("id-ID")}`,
     `Total Pengeluaran Saat Ini: Rp ${summary.monthlyExpenses.toLocaleString("id-ID")}`,
     `Top 3 Pengeluaran: ${topCategories || "Belum ada pengeluaran dominan"}`,
-    `Langganan Rutin: ${recurring || "Belum ada recurring rule"}`,
+    `Langganan Rutin (manual): ${recurring || "Belum ada recurring rule"}`,
+    `Recurring terdeteksi otomatis: ${detectedLine}`,
+    forecastLine,
     activeGoal
       ? `Target Tabungan: ${activeGoal.name} Rp ${activeGoal.targetAmount.toLocaleString("id-ID")} (Saat ini Rp ${activeGoal.currentAmount.toLocaleString("id-ID")})`
       : "Target Tabungan: Belum ada target aktif",
@@ -361,12 +381,17 @@ function buildDataset(params: {
       goal.targetAmount > 0 ? clamp(goal.currentAmount / goal.targetAmount) : 0,
   }));
 
+  const detectedRecurring = detectRecurringTransactions(transactions);
+  const forecast = forecastEndOfMonth(transactions, detectedRecurring);
+
   const aiSummary = buildAiSummary(
     summary,
     budgets,
     categoryBreakdown,
     goals,
     params.recurringItems,
+    forecast,
+    detectedRecurring,
   );
 
   return {
@@ -385,6 +410,8 @@ function buildDataset(params: {
     monthlyTrend,
     categoryBreakdown,
     recurringItems: params.recurringItems,
+    detectedRecurring,
+    forecast,
     aiSummary,
   };
 }
@@ -758,6 +785,8 @@ export async function getDashboardSummaryPayload() {
     budgets: dataset.budgets,
     categoryBreakdown: dataset.categoryBreakdown,
     monthlyTrend: dataset.monthlyTrend,
+    forecast: dataset.forecast,
+    detectedRecurring: dataset.detectedRecurring,
   };
 }
 

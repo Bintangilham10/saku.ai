@@ -13,6 +13,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import type { Account, Category, TransactionType } from "@/lib/saku-types";
+import { cn } from "@/lib/utils";
 
 type QuickAddTransactionProps = {
   accounts: Account[];
@@ -87,27 +88,37 @@ export function QuickAddTransaction({
   }
 
   return (
-    <Card className="rounded-[1.5rem] border-border/70">
+    <Card className="border-border/70">
       <CardHeader>
         <CardTitle>Quick Add</CardTitle>
-        <CardDescription>
-          Catat transaksi harian tanpa keluar dari dashboard.
-        </CardDescription>
+        <CardDescription>Input transaksi harian.</CardDescription>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-4" onSubmit={handleSubmit}>
-          <div className="grid gap-4 sm:grid-cols-2">
-            <label className="grid gap-2 text-sm">
+        <form className="grid gap-3" onSubmit={handleSubmit}>
+          <div className="grid gap-3 sm:grid-cols-2">
+            <div className="grid gap-2 text-sm">
               <span>Tipe</span>
-              <select
-                className="border-input bg-background h-10 rounded-md border px-3"
-                value={type}
-                onChange={(event) => setType(event.target.value as TransactionType)}
-              >
-                <option value="debit">Pengeluaran</option>
-                <option value="credit">Pemasukan</option>
-              </select>
-            </label>
+              <div className="grid grid-cols-2 rounded-md border border-input bg-muted p-1">
+                {[
+                  { value: "debit", label: "Keluar" },
+                  { value: "credit", label: "Masuk" },
+                ].map((item) => (
+                  <button
+                    key={item.value}
+                    className={cn(
+                      "h-8 rounded-sm text-sm transition-colors",
+                      type === item.value
+                        ? "bg-card text-foreground shadow-xs"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                    type="button"
+                    onClick={() => setType(item.value as TransactionType)}
+                  >
+                    {item.label}
+                  </button>
+                ))}
+              </div>
+            </div>
             <label className="grid gap-2 text-sm">
               <span>Nominal</span>
               <Input
@@ -121,7 +132,7 @@ export function QuickAddTransaction({
             </label>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-2 text-sm">
               <span>Tanggal</span>
               <Input
@@ -133,7 +144,7 @@ export function QuickAddTransaction({
             <label className="grid gap-2 text-sm">
               <span>Akun</span>
               <select
-                className="border-input bg-background h-10 rounded-md border px-3"
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                 value={accountId}
                 onChange={(event) => setAccountId(event.target.value)}
               >
@@ -146,11 +157,11 @@ export function QuickAddTransaction({
             </label>
           </div>
 
-          <div className="grid gap-4 sm:grid-cols-2">
+          <div className="grid gap-3 sm:grid-cols-2">
             <label className="grid gap-2 text-sm">
               <span>Kategori</span>
               <select
-                className="border-input bg-background h-10 rounded-md border px-3"
+                className="h-10 rounded-md border border-input bg-background px-3 text-sm"
                 value={categoryId}
                 onChange={(event) => setCategoryId(event.target.value)}
               >
@@ -184,7 +195,7 @@ export function QuickAddTransaction({
             <p className="text-sm text-muted-foreground">{status}</p>
           ) : null}
 
-          <Button disabled={submitting || !amount} type="submit">
+          <Button className="w-full sm:w-fit" disabled={submitting || !amount} type="submit">
             {submitting ? "Menyimpan..." : "Simpan transaksi"}
           </Button>
         </form>

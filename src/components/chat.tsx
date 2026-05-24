@@ -3,6 +3,7 @@
 import { useChat } from "ai/react";
 import { AlertCircle, Bot, Sparkles, User } from "lucide-react";
 
+import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -20,9 +21,9 @@ type ChatProps = {
 };
 
 const promptIdeas = [
-  "Apakah budget nongkrongku masih aman sampai akhir minggu?",
-  "Kasih 3 ide hemat makan tanpa bikin jadwal kuliah berantakan.",
-  "Kalau aku mau nabung laptop, alokasi bulan ini paling realistis berapa?",
+  "Budget nongkrong masih aman?",
+  "Ide hemat makan minggu ini.",
+  "Simulasi nabung laptop bulan ini.",
 ];
 
 export default function Chat({ summary, mode }: ChatProps) {
@@ -41,20 +42,18 @@ export default function Chat({ summary, mode }: ChatProps) {
   });
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.35fr_0.9fr]">
-      <Card className="rounded-[1.5rem] border-border/70">
+    <div className="grid gap-5 xl:grid-cols-[1.35fr_0.9fr]">
+      <Card className="border-border/70">
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
             Saku AI Advisor
           </CardTitle>
-          <CardDescription>
-            Chat dengan konteks ringkasan keuanganmu agar saran lebih spesifik.
-          </CardDescription>
+          <CardDescription>Tanya kondisi budgetmu.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {error ? (
-            <div className="rounded-2xl border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
+            <div className="rounded-md border border-destructive/30 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               <div className="flex items-center gap-2">
                 <AlertCircle className="h-4 w-4" />
                 <span>{error.message}</span>
@@ -62,14 +61,13 @@ export default function Chat({ summary, mode }: ChatProps) {
             </div>
           ) : null}
 
-          <div className="min-h-[420px] space-y-4 rounded-[1.25rem] border border-border/60 bg-background/70 p-4">
+          <div className="min-h-[340px] space-y-4 rounded-md border border-border/60 bg-background/70 p-3 sm:min-h-[420px] sm:p-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
                 <Bot className="mb-4 h-12 w-12 text-primary" />
                 <h3 className="text-lg font-semibold">Mulai ngobrol dengan Saku AI</h3>
-                <p className="text-muted-foreground mt-2 max-w-md text-sm leading-relaxed">
-                  Tanyakan strategi hemat, cek ruang budget, atau minta simulasi
-                  sederhana berdasarkan pengeluaranmu bulan ini.
+                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
+                  Tanyakan budget, tabungan, atau rencana pengeluaran.
                 </p>
               </div>
             ) : (
@@ -78,11 +76,11 @@ export default function Chat({ summary, mode }: ChatProps) {
                   key={message.id}
                   className={
                     message.role === "user"
-                      ? "ml-auto max-w-[85%] rounded-[1.25rem] rounded-tr-md bg-primary px-4 py-3 text-primary-foreground"
-                      : "max-w-[88%] rounded-[1.25rem] rounded-tl-md border border-border/60 bg-card px-4 py-3"
+                      ? "ml-auto max-w-[92%] rounded-md bg-primary px-4 py-3 text-primary-foreground sm:max-w-[85%]"
+                      : "max-w-[94%] rounded-md border border-border/60 bg-card px-4 py-3 sm:max-w-[88%]"
                   }
                 >
-                  <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.16em] opacity-80">
+                  <div className="mb-2 flex items-center gap-2 text-xs font-medium opacity-80">
                     {message.role === "user" ? (
                       <User className="h-3.5 w-3.5" />
                     ) : (
@@ -98,8 +96,8 @@ export default function Chat({ summary, mode }: ChatProps) {
             )}
 
             {chatLoading ? (
-              <div className="max-w-[88%] rounded-[1.25rem] rounded-tl-md border border-border/60 bg-card px-4 py-3">
-                <div className="mb-2 flex items-center gap-2 text-xs uppercase tracking-[0.16em] opacity-80">
+              <div className="max-w-[88%] rounded-md border border-border/60 bg-card px-4 py-3">
+                <div className="mb-2 flex items-center gap-2 text-xs font-medium opacity-80">
                   <Bot className="h-3.5 w-3.5" />
                   <span>Saku AI</span>
                 </div>
@@ -122,7 +120,7 @@ export default function Chat({ summary, mode }: ChatProps) {
             <Input
               className="h-11 flex-1"
               disabled={chatLoading}
-              placeholder="Contoh: Apa uangku cukup sampai minggu depan?"
+              placeholder="Tulis pertanyaan..."
               value={input}
               onChange={handleInputChange}
             />
@@ -133,35 +131,33 @@ export default function Chat({ summary, mode }: ChatProps) {
         </CardContent>
       </Card>
 
-      <div className="space-y-6">
-        <Card className="rounded-[1.5rem] border-border/70">
+      <div className="space-y-5">
+        <Card className="border-border/70">
           <CardHeader>
-            <CardTitle>Konteks yang Dipakai AI</CardTitle>
-            <CardDescription>
-              {mode === "live"
-                ? "Ringkasan diambil dari data Supabase milikmu."
-                : "Saat ini masih memakai mode demo karena data live belum tersedia."}
-            </CardDescription>
+            <CardTitle>Konteks AI</CardTitle>
           </CardHeader>
-          <CardContent>
-            <pre className="text-muted-foreground whitespace-pre-wrap rounded-[1.25rem] bg-background/70 p-4 text-sm leading-relaxed">
-              {summary}
-            </pre>
+          <CardContent className="space-y-3">
+            <Badge variant={mode === "live" ? "default" : "secondary"}>
+              {mode === "live" ? "Data live" : "Mode demo"}
+            </Badge>
+            <details className="rounded-md border border-border/60 bg-background/70 px-4 py-3 text-sm">
+              <summary className="cursor-pointer font-medium">Lihat ringkasan data</summary>
+              <pre className="mt-3 max-h-64 overflow-auto whitespace-pre-wrap text-muted-foreground">
+                {summary}
+              </pre>
+            </details>
           </CardContent>
         </Card>
 
-        <Card className="rounded-[1.5rem] border-border/70">
+        <Card className="border-border/70">
           <CardHeader>
             <CardTitle>Prompt Cepat</CardTitle>
-            <CardDescription>
-              Gunakan contoh ini untuk memulai percakapan yang spesifik.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {promptIdeas.map((idea) => (
               <div
                 key={idea}
-                className="rounded-[1.25rem] border border-border/60 bg-background/60 px-4 py-3 text-sm leading-relaxed"
+                className="rounded-md border border-border/60 bg-background/60 px-4 py-3 text-sm"
               >
                 {idea}
               </div>

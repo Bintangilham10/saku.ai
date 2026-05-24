@@ -30,8 +30,8 @@ export default async function AccountsPage() {
   return (
     <SakuShell
       mode={dataset.mode}
-      subtitle="Pisahkan tunai, bank, e-wallet, dan tabungan supaya arus kas lebih mudah dibaca."
-      title="Accounts"
+      subtitle="Saldo per dompet, bank, e-wallet, dan tabungan."
+      title="Akun"
       userName={dataset.userName}
     >
       <div className="grid gap-4 xl:grid-cols-3">
@@ -45,12 +45,12 @@ export default async function AccountsPage() {
           const Icon = icon;
 
           return (
-            <Card key={account.id} className="rounded-[1.5rem] border-border/70">
+            <Card key={account.id} className="border-border/70">
               <CardHeader>
-                <div className="bg-primary/10 text-primary flex h-11 w-11 items-center justify-center rounded-2xl">
+                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
                   <Icon className="h-5 w-5" />
                 </div>
-                <CardTitle className="mt-4">{account.name}</CardTitle>
+                <CardTitle className="mt-3 text-lg">{account.name}</CardTitle>
                 <CardDescription>
                   {account.type}
                   {account.institution ? ` - ${account.institution}` : ""}
@@ -59,16 +59,16 @@ export default async function AccountsPage() {
               <CardContent className="space-y-3">
                 <div>
                   <p className="text-muted-foreground text-sm">Estimasi saldo</p>
-                  <p className="text-2xl font-semibold">
+                  <p className="text-xl font-semibold tabular-nums">
                     {formatCurrency(balanceByAccount.get(account.id) ?? 0)}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-2xl border border-border/60 bg-background/60 p-3">
+                  <div className="rounded-md border border-border/60 bg-background/60 p-3">
                     <p className="text-muted-foreground">Aktivitas</p>
                     <p className="mt-1 font-medium">{transactions.length} transaksi</p>
                   </div>
-                  <div className="rounded-2xl border border-border/60 bg-background/60 p-3">
+                  <div className="rounded-md border border-border/60 bg-background/60 p-3">
                     <p className="text-muted-foreground">Terakhir dipakai</p>
                     <p className="mt-1 font-medium">
                       {lastUsed ? formatShortDate(lastUsed) : "Belum ada"}

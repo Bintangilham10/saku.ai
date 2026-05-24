@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, Upload } from "lucide-react";
+import { Download, MessageSquareText, Upload } from "lucide-react";
 
 import { QuickAddTransaction } from "@/components/quick-add-transaction";
 import { SakuShell } from "@/components/saku-shell";
@@ -23,71 +23,72 @@ export default async function TransactionsPage() {
       actions={
         <>
           <Button variant="outline">
-            <Upload className="mr-2 h-4 w-4" />
-            Import CSV
+            <Upload className="h-4 w-4" />
+            Import
           </Button>
           <Button variant="outline">
-            <Download className="mr-2 h-4 w-4" />
+            <Download className="h-4 w-4" />
             Export
           </Button>
           <Button asChild>
-            <Link href="/chat">Tanya AI</Link>
+            <Link href="/chat">
+              <MessageSquareText className="h-4 w-4" />
+              Chat AI
+            </Link>
           </Button>
         </>
       }
       mode={dataset.mode}
-      subtitle="Semua transaksi tersusun berdasarkan tanggal, kategori, dan akun agar mudah dilacak."
-      title="Transactions"
+      subtitle="Tambah, import, dan cek aktivitas uangmu."
+      title="Transaksi"
       userName={dataset.userName}
     >
-      <div className="grid gap-4 xl:grid-cols-[0.9fr_1.1fr]">
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <QuickAddTransaction
           accounts={dataset.accounts}
           canPersist={dataset.canPersist}
           categories={dataset.categories}
         />
 
-        <Card className="rounded-[1.5rem] border-border/70">
+        <Card className="border-border/70">
           <CardHeader>
-            <CardTitle>Catatan MVP</CardTitle>
+            <CardTitle>Ringkasan</CardTitle>
             <CardDescription>
-              Struktur API dan schema sudah siap untuk extend ke import CSV dan
-              inline edit berikutnya.
+              {dataset.mode === "live" ? "Data live" : "Mode demo"}
             </CardDescription>
           </CardHeader>
-          <CardContent className="space-y-3 text-sm text-muted-foreground">
-            <p>
-              Endpoint `GET/POST /api/transactions` sudah tersedia untuk list dan
-              penambahan transaksi baru.
-            </p>
-            <p>
-              Budget, chart, dan chat AI membaca sumber data yang sama agar
-              insight tetap konsisten.
-            </p>
-            <p>
-              Saat mode demo aktif, UI tetap bisa dipreview walau database live
-              belum terhubung.
-            </p>
+          <CardContent className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
+            {[
+              { label: "Total", value: `${dataset.transactions.length} transaksi` },
+              { label: "Masuk", value: formatCurrency(dataset.summary.monthlyIncome) },
+              { label: "Keluar", value: formatCurrency(dataset.summary.monthlyExpenses) },
+            ].map((item) => (
+              <div
+                key={item.label}
+                className="rounded-md border border-border/60 bg-background/60 p-4"
+              >
+                <p className="text-sm text-muted-foreground">{item.label}</p>
+                <p className="mt-1 font-semibold tabular-nums">{item.value}</p>
+              </div>
+            ))}
           </CardContent>
         </Card>
       </div>
 
-      <Card className="rounded-[1.5rem] border-border/70">
+      <Card className="border-border/70">
         <CardHeader>
           <CardTitle>Daftar Transaksi</CardTitle>
-          <CardDescription>
-            {dataset.transactions.length} transaksi tersedia dalam daftar saat ini.
-          </CardDescription>
+          <CardDescription>{dataset.transactions.length} transaksi</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {dataset.transactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="flex flex-col gap-3 rounded-[1.25rem] border border-border/60 bg-background/60 px-4 py-4 md:flex-row md:items-center md:justify-between"
+              className="grid gap-3 rounded-md border border-border/60 bg-background/60 px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
             >
-              <div className="space-y-1">
+              <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="font-medium">
+                  <p className="truncate font-medium">
                     {transaction.merchant ?? transaction.description ?? "Transaksi"}
                   </p>
                   <Badge variant="outline">
@@ -95,9 +96,8 @@ export default async function TransactionsPage() {
                   </Badge>
                   <Badge variant="secondary">{transaction.accountName ?? "Tanpa akun"}</Badge>
                 </div>
-                <p className="text-muted-foreground text-sm">
-                  {formatShortDate(transaction.date)} -{" "}
-                  {transaction.description ?? "Tidak ada catatan tambahan"}
+                <p className="text-sm text-muted-foreground">
+                  {formatShortDate(transaction.date)}
                 </p>
               </div>
               <div className="text-left md:text-right">
@@ -111,9 +111,7 @@ export default async function TransactionsPage() {
                   {transaction.type === "credit" ? "+" : "-"}
                   {formatCurrency(transaction.amount)}
                 </p>
-                <p className="text-muted-foreground text-sm">
-                  Status {transaction.status}
-                </p>
+                <p className="text-sm text-muted-foreground">{transaction.status}</p>
               </div>
             </div>
           ))}

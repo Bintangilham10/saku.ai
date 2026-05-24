@@ -67,6 +67,10 @@ const defaultBudgets = [
   { categoryName: "Akademik", limitAmount: 400000 },
 ] as const;
 
+const hasClerkKeys = Boolean(
+  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
+);
+
 function toNumber(value: number | string | null | undefined) {
   if (typeof value === "number") {
     return value;
@@ -719,6 +723,10 @@ async function fetchRecurringItems(client: SupabaseLikeClient, appUserId: string
 }
 
 export async function getSakuDataset(): Promise<SakuDataset> {
+  if (!hasClerkKeys) {
+    return getDemoDataset();
+  }
+
   const signedInUser = await currentUser();
   const fallbackName = getUserLabel(signedInUser?.firstName);
   const { userId } = await auth();

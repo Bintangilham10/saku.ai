@@ -26,6 +26,8 @@ const navItems = [
   { href: "/chat", label: "Chat AI", icon: MessageSquareText },
 ];
 
+const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
+
 type SakuShellProps = {
   title: string;
   subtitle: string;
@@ -47,30 +49,58 @@ export function SakuShell({
 
   return (
     <div className="min-h-screen">
-      <div className="mx-auto flex max-w-7xl flex-col gap-6 px-4 py-5 lg:flex-row lg:px-6">
-        <aside className="border-border/70 bg-card/80 shadow-primary/5 h-fit overflow-hidden rounded-[1.75rem] border backdrop-blur lg:sticky lg:top-6 lg:w-72">
-          <div className="border-border/70 border-b px-5 py-5">
-            <div className="mb-4 flex items-start justify-between gap-3">
+      <div className="sticky top-0 z-40 border-b border-border/70 bg-background/95 backdrop-blur lg:hidden">
+        <div className="flex h-16 items-center justify-between gap-3 px-4">
+          <div className="min-w-0">
+            <div className="flex items-center gap-2">
+              <div className="font-display text-xl">Saku AI</div>
+              <Badge variant={mode === "live" ? "default" : "secondary"}>
+                {mode === "live" ? "Live" : "Demo"}
+              </Badge>
+            </div>
+            <p className="truncate text-xs text-muted-foreground">{userName}</p>
+          </div>
+          <div className="flex items-center gap-2">
+            <ThemeToggle />
+            {hasClerk ? (
+              <UserButton />
+            ) : (
+              <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border/70 bg-card text-xs font-medium">
+                {userName.slice(0, 1).toUpperCase()}
+              </div>
+            )}
+          </div>
+        </div>
+      </div>
+
+      <div className="mx-4 grid max-w-7xl gap-5 overflow-hidden py-4 lg:mx-auto lg:grid-cols-[244px_minmax(0,1fr)] lg:px-6 lg:py-6">
+        <aside className="hidden h-fit overflow-hidden rounded-lg border border-border/70 bg-card/90 shadow-xs backdrop-blur lg:sticky lg:top-6 lg:block">
+          <div className="border-b border-border/70 px-4 py-4">
+            <div className="mb-4 flex items-center justify-between gap-3">
               <div>
-                <div className="font-display text-2xl tracking-tight">Saku AI</div>
-                <p className="text-muted-foreground mt-1 text-sm">
-                  Asisten keuangan mahasiswa
-                </p>
+                <div className="font-display text-2xl">Saku AI</div>
+                <p className="text-sm text-muted-foreground">Finance dashboard</p>
               </div>
               <Badge variant={mode === "live" ? "default" : "secondary"}>
                 {mode === "live" ? "Live" : "Demo"}
               </Badge>
             </div>
-            <div className="text-muted-foreground flex items-center justify-between text-sm">
-              <span>Halo, {userName}</span>
+            <div className="flex items-center justify-between gap-3 text-sm text-muted-foreground">
+              <span className="truncate">{userName}</span>
               <div className="flex items-center gap-2">
                 <ThemeToggle />
-                <UserButton />
+                {hasClerk ? (
+                  <UserButton />
+                ) : (
+                  <div className="flex h-8 w-8 items-center justify-center rounded-md border border-border/70 bg-background text-xs font-medium">
+                    {userName.slice(0, 1).toUpperCase()}
+                  </div>
+                )}
               </div>
             </div>
           </div>
 
-          <nav className="flex gap-2 overflow-x-auto px-4 py-4 lg:flex-col lg:overflow-visible">
+          <nav className="grid gap-1 p-3">
             {navItems.map((item) => {
               const Icon = item.icon;
               const active =
@@ -83,7 +113,7 @@ export function SakuShell({
                   key={item.href}
                   href={item.href}
                   className={cn(
-                    "hover:bg-accent/80 flex min-w-fit items-center gap-3 rounded-2xl px-4 py-3 text-sm transition-colors",
+                    "flex items-center gap-3 rounded-md px-3 py-2.5 text-sm transition-colors hover:bg-accent/80",
                     active
                       ? "bg-primary text-primary-foreground shadow-sm"
                       : "text-muted-foreground",
@@ -95,32 +125,52 @@ export function SakuShell({
               );
             })}
           </nav>
-
-          <div className="border-border/70 border-t px-5 py-4">
-            <p className="font-medium">Ritme hemat minggu ini</p>
-            <p className="text-muted-foreground mt-1 text-sm leading-relaxed">
-              Catat transaksi harian, cek budget nongkrong, lalu tanya Saku AI
-              sebelum akhir minggu.
-            </p>
-          </div>
         </aside>
 
-        <main className="flex-1">
-          <header className="mb-6 flex flex-col gap-4 rounded-[1.75rem] border border-border/70 bg-card/70 px-5 py-5 shadow-sm backdrop-blur sm:px-6">
-            <div className="flex flex-col gap-3 lg:flex-row lg:items-end lg:justify-between">
-              <div>
-                <h1 className="font-display text-3xl tracking-tight sm:text-4xl">
-                  {title}
-                </h1>
-                <p className="text-muted-foreground mt-2 max-w-2xl text-sm sm:text-base">
-                  {subtitle}
-                </p>
-              </div>
-              {actions ? <div className="flex flex-wrap gap-3">{actions}</div> : null}
+        <main className="w-full min-w-0 overflow-hidden">
+          <nav className="-mx-1 mb-5 flex gap-2 overflow-x-auto pb-1 [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden lg:hidden">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const active =
+                item.href === "/"
+                  ? pathname === "/"
+                  : pathname.startsWith(item.href);
+
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  className={cn(
+                    "flex min-w-fit items-center gap-2 rounded-md border px-3 py-2 text-sm transition-colors",
+                    active
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border/70 bg-card/80 text-muted-foreground",
+                  )}
+                >
+                  <Icon className="h-4 w-4" />
+                  <span>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <header className="mb-5 flex flex-col gap-4 border-b border-border/70 pb-5 sm:flex-row sm:items-end sm:justify-between">
+            <div className="min-w-0">
+              <h1 className="font-display text-2xl sm:text-3xl">
+                {title}
+              </h1>
+              <p className="mt-1 max-w-2xl text-sm text-muted-foreground">
+                {subtitle}
+              </p>
             </div>
+            {actions ? (
+              <div className="grid gap-2 sm:flex sm:flex-wrap sm:justify-end">
+                {actions}
+              </div>
+            ) : null}
           </header>
 
-          <div className="space-y-6">{children}</div>
+          <div className="space-y-5">{children}</div>
         </main>
       </div>
     </div>

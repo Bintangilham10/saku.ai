@@ -12,11 +12,11 @@ export default async function ChatPage() {
     <SakuShell
       actions={
         <Button asChild variant="outline">
-          <Link href="/transactions">Lihat data transaksi</Link>
+          <Link href="/transactions">Transaksi</Link>
         </Button>
       }
       mode={dataset.mode}
-      subtitle="Gunakan percakapan natural untuk minta saran hemat yang langsung mengacu pada ringkasan keuanganmu."
+      subtitle="Tanya budget, tabungan, dan rencana belanja."
       title="Chat Saku AI"
       userName={dataset.userName}
     >

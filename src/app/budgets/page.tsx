@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { MessageSquareText } from "lucide-react";
 
 import { SakuShell } from "@/components/saku-shell";
 import { Badge } from "@/components/ui/badge";
@@ -21,17 +22,20 @@ export default async function BudgetsPage() {
     <SakuShell
       actions={
         <Button asChild>
-          <Link href="/chat">Minta saran budget</Link>
+          <Link href="/chat">
+            <MessageSquareText className="h-4 w-4" />
+            Saran AI
+          </Link>
         </Button>
       }
       mode={dataset.mode}
-      subtitle="Pantau limit pengeluaran kategori mahasiswa dan lihat mana yang butuh intervensi lebih cepat."
-      title="Budgets"
+      subtitle="Limit kategori dan alert yang perlu dicek."
+      title="Budget"
       userName={dataset.userName}
     >
       <div className="grid gap-4 xl:grid-cols-2">
         {dataset.budgets.map((budget) => (
-          <Card key={budget.id} className="rounded-[1.5rem] border-border/70">
+          <Card key={budget.id} className="border-border/70">
             <CardHeader>
               <div className="flex items-center justify-between gap-3">
                 <div>
@@ -57,11 +61,13 @@ export default async function BudgetsPage() {
               <Progress value={Math.min(budget.progress * 100, 100)} />
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Terpakai</span>
-                <span className="font-medium">{formatCurrency(budget.spentAmount)}</span>
+                <span className="font-medium tabular-nums">
+                  {formatCurrency(budget.spentAmount)}
+                </span>
               </div>
               <div className="flex items-center justify-between text-sm">
                 <span className="text-muted-foreground">Sisa budget</span>
-                <span className="font-medium">
+                <span className="font-medium tabular-nums">
                   {formatCurrency(Math.max(budget.limitAmount - budget.spentAmount, 0))}
                 </span>
               </div>
@@ -70,24 +76,22 @@ export default async function BudgetsPage() {
         ))}
       </div>
 
-      <Card className="rounded-[1.5rem] border-border/70">
+      <Card className="border-border/70">
         <CardHeader>
           <CardTitle>Alert & Rekomendasi</CardTitle>
-          <CardDescription>
-            Budget yang paling butuh perhatian sebelum akhir periode.
-          </CardDescription>
+          <CardDescription>Prioritas bulan ini.</CardDescription>
         </CardHeader>
         <CardContent className="space-y-3">
           {dataset.alerts.length ? (
             dataset.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-[1.25rem] border border-border/60 bg-background/60 px-4 py-4"
+                className="rounded-md border border-border/60 bg-background/60 px-4 py-4"
               >
-                <div className="flex items-center justify-between gap-3">
-                  <div>
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div className="min-w-0">
                     <p className="font-medium">{alert.categoryName}</p>
-                    <p className="text-muted-foreground mt-1 text-sm">
+                    <p className="mt-1 text-sm text-muted-foreground">
                       {alert.message}
                     </p>
                   </div>

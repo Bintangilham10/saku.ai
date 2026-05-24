@@ -4,10 +4,8 @@ import { SignInButton } from "@clerk/nextjs";
 import {
   ArrowRight,
   Bot,
-  CircleDollarSign,
   PiggyBank,
   ReceiptText,
-  TrendingDown,
 } from "lucide-react";
 
 import { DashboardCharts } from "@/components/dashboard-charts";
@@ -37,180 +35,135 @@ function SummaryCard({
   hint: string;
 }) {
   return (
-    <Card className="rounded-[1.5rem] border-border/70">
+    <Card className="border-border/70">
       <CardHeader className="pb-3">
         <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-2xl">{value}</CardTitle>
+        <CardTitle className="text-xl tabular-nums">{value}</CardTitle>
       </CardHeader>
       <CardContent>
-        <p className="text-muted-foreground text-sm">{hint}</p>
+        <p className="text-sm text-muted-foreground">{hint}</p>
       </CardContent>
     </Card>
   );
 }
 
-function SignedOutLanding() {
+function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
+  const highlights = [
+    { title: "Transaksi", icon: ReceiptText },
+    { title: "Budget", icon: PiggyBank },
+    { title: "Chat AI", icon: Bot },
+  ];
+
   return (
-    <div className="min-h-screen px-4 py-6 sm:px-6">
-      <div className="mx-auto max-w-6xl">
-        <div className="overflow-hidden rounded-[2rem] border border-border/70 bg-card/75 shadow-lg backdrop-blur">
-          <div className="grid gap-8 px-6 py-10 lg:grid-cols-[1.1fr_0.9fr] lg:px-10 lg:py-12">
-            <div className="space-y-6">
-              <Badge variant="secondary">MVP Mahasiswa</Badge>
-              <div className="space-y-4">
-                <h1 className="font-display max-w-3xl text-4xl leading-tight tracking-tight sm:text-5xl lg:text-6xl">
-                  Satu dashboard buat catat uang saku, jaga budget, dan tanya AI.
-                </h1>
-                <p className="text-muted-foreground max-w-2xl text-base leading-relaxed sm:text-lg">
-                  Saku AI menggabungkan pencatatan transaksi, budget tracker,
-                  goals, dan chat assistant supaya mahasiswa bisa ambil keputusan
-                  finansial yang lebih cepat dan masuk akal.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap gap-3">
-                <SignInButton mode="modal">
-                  <Button className="h-11 px-6">
-                    Mulai sekarang
-                    <ArrowRight className="ml-2 h-4 w-4" />
-                  </Button>
-                </SignInButton>
-                <Button asChild className="h-11 px-6" variant="outline">
-                  <Link href="#fitur">Lihat fitur inti</Link>
-                </Button>
-              </div>
-
-              <div className="grid gap-3 sm:grid-cols-3">
-                {[
-                  {
-                    title: "Transaksi cepat",
-                    text: "Tambah pemasukan dan pengeluaran dalam beberapa klik.",
-                    icon: ReceiptText,
-                  },
-                  {
-                    title: "Budget mahasiswa",
-                    text: "Pantau kos, makan, transport, dan nongkrong per bulan.",
-                    icon: PiggyBank,
-                  },
-                  {
-                    title: "Saran AI",
-                    text: "Tanya strategi hemat dengan konteks data keuanganmu.",
-                    icon: Bot,
-                  },
-                ].map((item) => {
-                  const Icon = item.icon;
-
-                  return (
-                    <Card
-                      key={item.title}
-                      className="rounded-[1.5rem] border-border/70 bg-background/60"
-                    >
-                      <CardHeader className="gap-3">
-                        <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-2xl">
-                          <Icon className="h-5 w-5" />
-                        </div>
-                        <div>
-                          <CardTitle className="text-base">{item.title}</CardTitle>
-                          <CardDescription className="mt-1 text-sm">
-                            {item.text}
-                          </CardDescription>
-                        </div>
-                      </CardHeader>
-                    </Card>
-                  );
-                })}
-              </div>
-            </div>
-
-            <Card className="rounded-[1.75rem] border-border/70 bg-background/65">
-              <CardHeader>
-                <CardTitle>Gambaran MVP</CardTitle>
-                <CardDescription>
-                  Scope mengikuti `tech_doc.md` untuk dashboard finansial mahasiswa.
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-4">
-                {[
-                  {
-                    label: "Catat transaksi manual + siap untuk import CSV",
-                    value: "01",
-                  },
-                  {
-                    label: "Pantau saldo, tren bulanan, dan progres budget",
-                    value: "02",
-                  },
-                  {
-                    label: "Kelola akun, recurring cost, dan target tabungan",
-                    value: "03",
-                  },
-                  {
-                    label: "Chat AI berbasis ringkasan keuangan pengguna",
-                    value: "04",
-                  },
-                ].map((item) => (
+    <div className="min-h-screen py-4">
+      <section className="relative mx-4 flex min-h-[calc(100vh-2rem)] max-w-6xl items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm sm:mx-6 lg:mx-auto">
+        <div className="absolute inset-0 hidden p-4 opacity-70 sm:block lg:p-6">
+          <div className="grid h-full gap-4 lg:grid-cols-[220px_1fr]">
+            <div className="rounded-lg border border-border/70 bg-background/80 p-4">
+              <div className="font-display text-2xl">Saku AI</div>
+              <div className="mt-6 space-y-2">
+                {["Dashboard", "Transaksi", "Budget", "Chat AI"].map((item, index) => (
                   <div
-                    key={item.value}
-                    className="flex items-start gap-4 rounded-[1.25rem] border border-border/60 bg-card/80 px-4 py-4"
+                    key={item}
+                    className={
+                      index === 0
+                        ? "rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
+                        : "rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground"
+                    }
                   >
-                    <div className="text-primary font-display text-2xl">
-                      {item.value}
-                    </div>
-                    <p className="text-sm leading-relaxed">{item.label}</p>
+                    {item}
                   </div>
                 ))}
-              </CardContent>
-            </Card>
+              </div>
+            </div>
+            <div className="rounded-lg border border-border/70 bg-background/80 p-4">
+              <div className="grid gap-3 md:grid-cols-3">
+                {["Rp 1,8 jt", "Rp 3,2 jt", "42%"].map((item) => (
+                  <div key={item} className="rounded-md border border-border/60 bg-card p-4">
+                    <div className="h-2 w-16 rounded bg-muted" />
+                    <div className="mt-4 text-xl font-semibold">{item}</div>
+                  </div>
+                ))}
+              </div>
+              <div className="mt-4 flex h-48 items-end gap-3 rounded-md border border-border/60 bg-card p-4">
+                {[38, 58, 44, 76, 52, 88].map((height, index) => (
+                  <div
+                    key={height}
+                    className={index % 2 ? "w-full rounded bg-chart-2" : "w-full rounded bg-chart-1"}
+                    style={{ height: `${height}%` }}
+                  />
+                ))}
+              </div>
+              <div className="mt-4 grid gap-3 md:grid-cols-2">
+                <div className="rounded-md border border-border/60 bg-card p-4" />
+                <div className="rounded-md border border-border/60 bg-card p-4" />
+              </div>
+            </div>
           </div>
         </div>
 
-        <section className="mt-8 grid gap-4 sm:grid-cols-2 xl:grid-cols-4" id="fitur">
-          {[
-            {
-              title: "Saldo terpusat",
-              text: "Gabungkan uang saku, freelance, dan tabungan dalam satu layar.",
-              icon: CircleDollarSign,
-            },
-            {
-              title: "Alert budget",
-              text: "Dapat notifikasi ketika kategori menyentuh 90% limit.",
-              icon: TrendingDown,
-            },
-            {
-              title: "Kategori khas mahasiswa",
-              text: "Kos, makan, akademik, transport, dan nongkrong siap pakai.",
-              icon: ReceiptText,
-            },
-            {
-              title: "Goal tracker",
-              text: "Pantau progres target seperti beli laptop atau dana darurat.",
-              icon: PiggyBank,
-            },
-          ].map((item) => {
-            const Icon = item.icon;
+        <div className="absolute inset-0 bg-background/85" />
 
-            return (
-              <Card key={item.title} className="rounded-[1.5rem] border-border/70">
-                <CardHeader>
-                  <div className="bg-primary/10 text-primary flex h-10 w-10 items-center justify-center rounded-2xl">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <CardTitle className="mt-4 text-lg">{item.title}</CardTitle>
-                  <CardDescription>{item.text}</CardDescription>
-                </CardHeader>
-              </Card>
-            );
-          })}
-        </section>
-      </div>
+        <div className="relative w-full min-w-0 max-w-xl px-6 py-10 sm:px-10">
+          <Badge variant="secondary">MVP Mahasiswa</Badge>
+          <h1 className="font-display mt-5 text-4xl leading-tight sm:text-5xl">
+            Saku AI
+          </h1>
+          <p className="mt-4 max-w-xs text-base text-muted-foreground sm:max-w-lg sm:text-lg">
+            Dashboard ringkas untuk catat uang saku, pantau budget, dan ngobrol
+            dengan AI finansial.
+          </p>
+
+          <div className="mt-6 grid max-w-xs gap-3 sm:flex sm:max-w-none">
+            {authEnabled ? (
+              <SignInButton mode="modal">
+                <Button className="h-11 w-full px-6 sm:w-auto">
+                  Mulai sekarang
+                  <ArrowRight className="h-4 w-4" />
+                </Button>
+              </SignInButton>
+            ) : (
+              <Button asChild className="h-11 w-full px-6 sm:w-auto">
+                <Link href="/transactions">
+                  Lihat demo
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+              </Button>
+            )}
+            <Button asChild className="h-11 w-full px-6 sm:w-auto" variant="outline">
+              <Link href="/chat">Coba chat</Link>
+            </Button>
+          </div>
+
+          <div className="mt-8 grid max-w-xs gap-2 sm:max-w-none sm:grid-cols-3">
+            {highlights.map((item) => {
+              const Icon = item.icon;
+
+              return (
+                <div
+                  key={item.title}
+                  className="flex items-center gap-2 rounded-md border border-border/70 bg-card/85 px-3 py-2 text-sm"
+                >
+                  <Icon className="h-4 w-4 text-primary" />
+                  <span>{item.title}</span>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
 
 export default async function Home() {
-  const { userId } = await auth();
+  const authEnabled = Boolean(
+    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
+  );
+  const { userId } = authEnabled ? await auth() : { userId: null };
 
   if (!userId) {
-    return <SignedOutLanding />;
+    return <SignedOutLanding authEnabled={authEnabled} />;
   }
 
   const dataset = await getSakuDataset();
@@ -220,19 +173,25 @@ export default async function Home() {
       actions={
         <>
           <Button asChild variant="outline">
-            <Link href="/transactions">Lihat transaksi</Link>
+            <Link href="/transactions">
+              <ReceiptText className="h-4 w-4" />
+              Transaksi
+            </Link>
           </Button>
           <Button asChild>
-            <Link href="/chat">Buka chat AI</Link>
+            <Link href="/chat">
+              <Bot className="h-4 w-4" />
+              Chat AI
+            </Link>
           </Button>
         </>
       }
       mode={dataset.mode}
-      subtitle="Pantau arus kas, cek budget kritis, dan catat transaksi baru tanpa pindah context."
+      subtitle="Arus kas, budget, dan transaksi terbaru dalam satu layar."
       title="Dashboard Keuangan"
       userName={dataset.userName}
     >
-      <div className="grid gap-4 xl:grid-cols-4 2xl:grid-cols-5">
+      <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
         <SummaryCard
           hint={`Periode aktif ${dataset.periodLabel}`}
           label="Saldo bersih"
@@ -257,18 +216,15 @@ export default async function Home() {
       </div>
 
       {dataset.alerts.length ? (
-        <Card className="rounded-[1.5rem] border-border/70">
+        <Card className="border-border/70">
           <CardHeader>
             <CardTitle>Alert Budget</CardTitle>
-            <CardDescription>
-              Kategori berikut sudah mendekati atau melewati limit bulanan.
-            </CardDescription>
           </CardHeader>
-          <CardContent className="grid gap-4 lg:grid-cols-2">
+          <CardContent className="grid gap-3 lg:grid-cols-2">
             {dataset.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-[1.25rem] border border-border/60 bg-background/60 p-4"
+                className="rounded-md border border-border/60 bg-background/60 p-4"
               >
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <p className="font-medium">{alert.categoryName}</p>
@@ -279,7 +235,7 @@ export default async function Home() {
                   </Badge>
                 </div>
                 <Progress value={Math.min(alert.progress * 100, 100)} />
-                <p className="text-muted-foreground mt-3 text-sm leading-relaxed">
+                <p className="mt-3 text-sm text-muted-foreground">
                   {alert.message}
                 </p>
               </div>
@@ -293,31 +249,28 @@ export default async function Home() {
         monthlyTrend={dataset.monthlyTrend}
       />
 
-      <div className="grid gap-6 xl:grid-cols-[0.95fr_1.05fr]">
+      <div className="grid gap-5 xl:grid-cols-[0.95fr_1.05fr]">
         <QuickAddTransaction
           accounts={dataset.accounts}
           canPersist={dataset.canPersist}
           categories={dataset.categories}
         />
 
-        <Card className="rounded-[1.5rem] border-border/70">
+        <Card className="border-border/70">
           <CardHeader>
             <CardTitle>Transaksi Terbaru</CardTitle>
-            <CardDescription>
-              Ringkasan aktivitas finansial yang paling baru masuk.
-            </CardDescription>
           </CardHeader>
           <CardContent className="space-y-3">
             {dataset.recentTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex items-center justify-between rounded-[1.25rem] border border-border/60 bg-background/60 px-4 py-3"
+                className="flex flex-col gap-2 rounded-md border border-border/60 bg-background/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
-                <div>
-                  <p className="font-medium">
+                <div className="min-w-0">
+                  <p className="truncate font-medium">
                     {transaction.merchant ?? transaction.description ?? "Transaksi"}
                   </p>
-                  <p className="text-muted-foreground text-sm">
+                  <p className="truncate text-sm text-muted-foreground">
                     {transaction.categoryName ?? "Tanpa kategori"} -{" "}
                     {transaction.accountName ?? "Tanpa akun"} -{" "}
                     {formatShortDate(transaction.date)}
@@ -326,8 +279,8 @@ export default async function Home() {
                 <p
                   className={
                     transaction.type === "credit"
-                      ? "font-medium text-primary"
-                      : "font-medium text-foreground"
+                      ? "shrink-0 font-medium text-primary"
+                      : "shrink-0 font-medium text-foreground"
                   }
                 >
                   {transaction.type === "credit" ? "+" : "-"}

@@ -17,12 +17,6 @@ const modeLabels: Record<ForecastResult["mode"], string> = {
   rich: "Akurasi tinggi",
 };
 
-const modeHints: Record<ForecastResult["mode"], string> = {
-  "cold-start": "Data masih sedikit, rentang prediksi lebar.",
-  standard: "Estimasi dari pengeluaran 30 hari terakhir.",
-  rich: "Recurring sudah terpisah dari pengeluaran variabel.",
-};
-
 type ForecastCardProps = {
   forecast: ForecastResult;
 };
@@ -43,7 +37,7 @@ export function ForecastCard({ forecast }: ForecastCardProps) {
         : { label: "Aman", variant: "outline" as const };
 
   return (
-    <Card className="rounded-[1.5rem] border-border/70">
+    <Card className="border-border/70">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
@@ -52,21 +46,18 @@ export function ForecastCard({ forecast }: ForecastCardProps) {
           </div>
           <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
         </div>
-        <CardTitle className="text-2xl">
+        <CardTitle className="text-xl">
           {formatCurrency(forecast.predictedBalance)}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-2 text-sm">
-        <p className="text-muted-foreground">
+      <CardContent className="space-y-1.5 text-sm">
+        <p className="text-muted-foreground tabular-nums">
           Rentang {formatCurrency(forecast.lower)} -{" "}
           {formatCurrency(forecast.upper)}
         </p>
-        <p className="text-muted-foreground text-xs">
-          {modeLabels[forecast.mode]} - {forecast.daysRemaining} hari menuju{" "}
-          {formatShortDate(forecast.horizonDate)}.
-        </p>
-        <p className="text-muted-foreground text-xs leading-relaxed">
-          {modeHints[forecast.mode]}
+        <p className="text-xs text-muted-foreground">
+          {modeLabels[forecast.mode]} - {forecast.daysRemaining} hari ke{" "}
+          {formatShortDate(forecast.horizonDate)}
         </p>
       </CardContent>
     </Card>

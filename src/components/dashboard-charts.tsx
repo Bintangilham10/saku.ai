@@ -14,6 +14,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { formatCurrency } from "@/lib/format";
 import type { CategoryBreakdown, MonthlyTrend } from "@/lib/saku-types";
 
 type DashboardChartsProps = {
@@ -47,16 +48,14 @@ export function DashboardCharts({
   );
 
   return (
-    <div className="grid gap-6 xl:grid-cols-[1.3fr_0.9fr]">
-      <Card className="overflow-hidden rounded-[1.5rem] border-border/70">
+    <div className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
+      <Card className="overflow-hidden border-border/70">
         <CardHeader>
           <CardTitle>Tren 6 Bulan</CardTitle>
-          <CardDescription>
-            Bandingkan pemasukan dan pengeluaran per bulan.
-          </CardDescription>
+          <CardDescription>Pemasukan vs pengeluaran.</CardDescription>
         </CardHeader>
         <CardContent>
-          <ChartContainer config={trendConfig} className="h-[280px] w-full">
+          <ChartContainer config={trendConfig} className="h-[230px] w-full sm:h-[280px]">
             <BarChart data={monthlyTrend}>
               <CartesianGrid vertical={false} />
               <XAxis
@@ -81,17 +80,15 @@ export function DashboardCharts({
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden rounded-[1.5rem] border-border/70">
+      <Card className="overflow-hidden border-border/70">
         <CardHeader>
           <CardTitle>Top Kategori Bulan Ini</CardTitle>
-          <CardDescription>
-            Kategori yang paling banyak menguras saldo kamu saat ini.
-          </CardDescription>
+          <CardDescription>Pengeluaran terbesar.</CardDescription>
         </CardHeader>
         <CardContent className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] xl:grid-cols-1">
           <ChartContainer
             config={breakdownConfig}
-            className="mx-auto h-[240px] w-full max-w-[280px]"
+            className="mx-auto h-[210px] w-full max-w-[260px] sm:h-[240px]"
           >
             <PieChart>
               <ChartTooltip content={<ChartTooltipContent hideLabel />} />
@@ -113,22 +110,22 @@ export function DashboardCharts({
             {categoryBreakdown.map((item) => (
               <div
                 key={item.name}
-                className="flex items-center justify-between rounded-2xl border border-border/60 bg-background/50 px-4 py-3"
+                className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/50 px-3 py-3"
               >
-                <div className="flex items-center gap-3">
+                <div className="flex min-w-0 items-center gap-3">
                   <span
                     className="h-3 w-3 rounded-full"
                     style={{ backgroundColor: item.color }}
                   />
-                  <div>
-                    <p className="font-medium">{item.name}</p>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium">{item.name}</p>
                     <p className="text-muted-foreground text-xs">
-                      {Math.round(item.share * 100)}% dari total bulanan
+                      {Math.round(item.share * 100)}% bulan ini
                     </p>
                   </div>
                 </div>
-                <p className="font-medium tabular-nums">
-                  Rp {item.amount.toLocaleString("id-ID")}
+                <p className="shrink-0 text-right text-sm font-medium tabular-nums">
+                  {formatCurrency(item.amount)}
                 </p>
               </div>
             ))}

@@ -1,14 +1,13 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { AlertCircle, Bot, Sparkles, User } from "lucide-react";
+import { AlertCircle, Bot, Send, Sparkles, User } from "lucide-react";
 
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -34,6 +33,7 @@ export default function Chat({ summary, mode }: ChatProps) {
     handleSubmit,
     error,
     isLoading: chatLoading,
+    setInput,
   } = useChat({
     body: { summary },
     onError: (chatError) => {
@@ -43,13 +43,12 @@ export default function Chat({ summary, mode }: ChatProps) {
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1.35fr_0.9fr]">
-      <Card className="border-border/70">
-        <CardHeader>
+      <Card className="border-border/60 bg-card/80">
+        <CardHeader className="pb-0">
           <CardTitle className="flex items-center gap-2">
             <Sparkles className="h-5 w-5 text-primary" />
-            Saku AI Advisor
+            Saku AI
           </CardTitle>
-          <CardDescription>Tanya kondisi budgetmu.</CardDescription>
         </CardHeader>
         <CardContent className="flex flex-col gap-4">
           {error ? (
@@ -61,13 +60,13 @@ export default function Chat({ summary, mode }: ChatProps) {
             </div>
           ) : null}
 
-          <div className="min-h-[340px] space-y-4 rounded-md border border-border/60 bg-background/70 p-3 sm:min-h-[420px] sm:p-4">
+          <div className="min-h-[340px] space-y-4 rounded-md border border-border/60 bg-background/60 p-3 sm:min-h-[420px] sm:p-4">
             {messages.length === 0 ? (
               <div className="flex h-full flex-col items-center justify-center text-center">
-                <Bot className="mb-4 h-12 w-12 text-primary" />
-                <h3 className="text-lg font-semibold">Mulai ngobrol dengan Saku AI</h3>
-                <p className="mt-2 max-w-sm text-sm text-muted-foreground">
-                  Tanyakan budget, tabungan, atau rencana pengeluaran.
+                <Bot className="mb-3 h-10 w-10 text-primary" />
+                <h3 className="text-base font-semibold">Mulai bertanya</h3>
+                <p className="mt-1 text-sm text-muted-foreground">
+                  Budget, tabungan, atau rencana belanja.
                 </p>
               </div>
             ) : (
@@ -120,21 +119,22 @@ export default function Chat({ summary, mode }: ChatProps) {
             <Input
               className="h-11 flex-1"
               disabled={chatLoading}
-              placeholder="Tulis pertanyaan..."
+              placeholder="Tulis pertanyaan"
               value={input}
               onChange={handleInputChange}
             />
             <Button className="h-11 px-6" disabled={chatLoading || !input.trim()} type="submit">
-              {chatLoading ? "Memproses..." : "Kirim"}
+              <Send className="h-4 w-4" />
+              {chatLoading ? "..." : "Kirim"}
             </Button>
           </form>
         </CardContent>
       </Card>
 
       <div className="space-y-5">
-        <Card className="border-border/70">
-          <CardHeader>
-            <CardTitle>Konteks AI</CardTitle>
+        <Card className="border-border/60 bg-card/80">
+          <CardHeader className="pb-0">
+            <CardTitle>Data</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             <Badge variant={mode === "live" ? "default" : "secondary"}>
@@ -149,18 +149,20 @@ export default function Chat({ summary, mode }: ChatProps) {
           </CardContent>
         </Card>
 
-        <Card className="border-border/70">
-          <CardHeader>
-            <CardTitle>Prompt Cepat</CardTitle>
+        <Card className="border-border/60 bg-card/80">
+          <CardHeader className="pb-0">
+            <CardTitle>Prompt</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
             {promptIdeas.map((idea) => (
-              <div
+              <button
                 key={idea}
-                className="rounded-md border border-border/60 bg-background/60 px-4 py-3 text-sm"
+                className="w-full rounded-md border border-border/60 bg-background/50 px-4 py-3 text-left text-sm transition-colors hover:bg-muted"
+                type="button"
+                onClick={() => setInput(idea)}
               >
                 {idea}
-              </div>
+              </button>
             ))}
           </CardContent>
         </Card>

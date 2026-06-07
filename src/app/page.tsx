@@ -35,14 +35,16 @@ function SummaryCard({
   hint: string;
 }) {
   return (
-    <Card className="border-border/70">
-      <CardHeader className="pb-3">
-        <CardDescription>{label}</CardDescription>
-        <CardTitle className="text-xl tabular-nums">{value}</CardTitle>
+    <Card className="border-border/60 bg-card/80">
+      <CardHeader className="gap-2 pb-0">
+        <CardDescription className="text-xs font-medium uppercase tracking-[0.08em]">
+          {label}
+        </CardDescription>
+        <CardTitle className="text-2xl font-semibold tabular-nums">
+          {value}
+        </CardTitle>
+        <p className="truncate text-xs text-muted-foreground">{hint}</p>
       </CardHeader>
-      <CardContent>
-        <p className="text-sm text-muted-foreground">{hint}</p>
-      </CardContent>
     </Card>
   );
 }
@@ -56,11 +58,11 @@ function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
 
   return (
     <div className="min-h-screen py-4">
-      <section className="relative mx-4 flex min-h-[calc(100vh-2rem)] max-w-6xl items-center overflow-hidden rounded-lg border border-border/70 bg-card shadow-sm sm:mx-6 lg:mx-auto">
-        <div className="absolute inset-0 hidden p-4 opacity-70 sm:block lg:p-6">
+      <section className="relative mx-4 flex min-h-[calc(100svh-2rem)] max-w-6xl items-center overflow-hidden rounded-md border border-border/60 bg-card/80 sm:mx-6 lg:mx-auto">
+        <div className="absolute inset-0 hidden p-4 opacity-80 sm:block lg:p-6">
           <div className="grid h-full gap-4 lg:grid-cols-[220px_1fr]">
-            <div className="rounded-lg border border-border/70 bg-background/80 p-4">
-              <div className="font-display text-2xl">Saku AI</div>
+            <div className="rounded-md border border-border/60 bg-background/80 p-4">
+              <div className="font-display text-xl font-semibold">Saku AI</div>
               <div className="mt-6 space-y-2">
                 {["Dashboard", "Transaksi", "Budget", "Chat AI"].map((item, index) => (
                   <div
@@ -68,7 +70,7 @@ function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
                     className={
                       index === 0
                         ? "rounded-md bg-primary px-3 py-2 text-sm text-primary-foreground"
-                        : "rounded-md bg-muted px-3 py-2 text-sm text-muted-foreground"
+                        : "rounded-md px-3 py-2 text-sm text-muted-foreground"
                     }
                   >
                     {item}
@@ -76,16 +78,16 @@ function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
                 ))}
               </div>
             </div>
-            <div className="rounded-lg border border-border/70 bg-background/80 p-4">
+            <div className="rounded-md border border-border/60 bg-background/80 p-4">
               <div className="grid gap-3 md:grid-cols-3">
                 {["Rp 1,8 jt", "Rp 3,2 jt", "42%"].map((item) => (
-                  <div key={item} className="rounded-md border border-border/60 bg-card p-4">
+                  <div key={item} className="rounded-md border border-border/60 bg-card/90 p-4">
                     <div className="h-2 w-16 rounded bg-muted" />
                     <div className="mt-4 text-xl font-semibold">{item}</div>
                   </div>
                 ))}
               </div>
-              <div className="mt-4 flex h-48 items-end gap-3 rounded-md border border-border/60 bg-card p-4">
+              <div className="mt-4 flex h-48 items-end gap-3 rounded-md border border-border/60 bg-card/90 p-4">
                 {[38, 58, 44, 76, 52, 88].map((height, index) => (
                   <div
                     key={height}
@@ -95,43 +97,41 @@ function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
                 ))}
               </div>
               <div className="mt-4 grid gap-3 md:grid-cols-2">
-                <div className="rounded-md border border-border/60 bg-card p-4" />
-                <div className="rounded-md border border-border/60 bg-card p-4" />
+                <div className="rounded-md border border-border/60 bg-card/90 p-4" />
+                <div className="rounded-md border border-border/60 bg-card/90 p-4" />
               </div>
             </div>
           </div>
         </div>
 
-        <div className="absolute inset-0 bg-background/85" />
+        <div className="absolute inset-0 bg-background/86" />
 
         <div className="relative w-full min-w-0 max-w-xl px-6 py-10 sm:px-10">
-          <Badge variant="secondary">MVP Mahasiswa</Badge>
-          <h1 className="font-display mt-5 text-4xl leading-tight sm:text-5xl">
+          <h1 className="font-display text-4xl font-semibold leading-tight sm:text-5xl">
             Saku AI
           </h1>
-          <p className="mt-4 max-w-xs text-base text-muted-foreground sm:max-w-lg sm:text-lg">
-            Dashboard ringkas untuk catat uang saku, pantau budget, dan ngobrol
-            dengan AI finansial.
+          <p className="mt-4 max-w-sm text-base text-muted-foreground sm:text-lg">
+            Dashboard uang saku yang ringkas, rapi, dan siap dipakai.
           </p>
 
           <div className="mt-6 grid max-w-xs gap-3 sm:flex sm:max-w-none">
             {authEnabled ? (
               <SignInButton mode="modal">
                 <Button className="h-11 w-full px-6 sm:w-auto">
-                  Mulai sekarang
+                  Masuk
                   <ArrowRight className="h-4 w-4" />
                 </Button>
               </SignInButton>
             ) : (
               <Button asChild className="h-11 w-full px-6 sm:w-auto">
                 <Link href="/transactions">
-                  Lihat demo
+                  Demo
                   <ArrowRight className="h-4 w-4" />
                 </Link>
               </Button>
             )}
             <Button asChild className="h-11 w-full px-6 sm:w-auto" variant="outline">
-              <Link href="/chat">Coba chat</Link>
+              <Link href="/chat">Chat</Link>
             </Button>
           </div>
 
@@ -142,7 +142,7 @@ function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
               return (
                 <div
                   key={item.title}
-                  className="flex items-center gap-2 rounded-md border border-border/70 bg-card/85 px-3 py-2 text-sm"
+                  className="flex items-center gap-2 rounded-md border border-border/60 bg-card/85 px-3 py-2 text-sm"
                 >
                   <Icon className="h-4 w-4 text-primary" />
                   <span>{item.title}</span>
@@ -187,44 +187,44 @@ export default async function Home() {
         </>
       }
       mode={dataset.mode}
-      subtitle="Arus kas, budget, dan transaksi terbaru dalam satu layar."
-      title="Dashboard Keuangan"
+      subtitle="Ringkasan arus kas bulan ini."
+      title="Dashboard"
       userName={dataset.userName}
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
         <SummaryCard
-          hint={`Periode aktif ${dataset.periodLabel}`}
-          label="Saldo bersih"
+          hint={dataset.periodLabel}
+          label="Saldo"
           value={formatCurrency(dataset.summary.balance)}
         />
         <SummaryCard
-          hint={`${dataset.summary.transactionCount} transaksi bulan ini`}
-          label="Pemasukan bulan ini"
+          hint={`${dataset.summary.transactionCount} transaksi`}
+          label="Masuk"
           value={formatCurrency(dataset.summary.monthlyIncome)}
         />
         <SummaryCard
-          hint="Total pengeluaran bulan berjalan"
-          label="Pengeluaran bulan ini"
+          hint="Bulan ini"
+          label="Keluar"
           value={formatCurrency(dataset.summary.monthlyExpenses)}
         />
         <SummaryCard
-          hint="Semakin tinggi, semakin banyak sisa dana"
-          label="Savings rate"
+          hint="Sisa dana"
+          label="Savings"
           value={formatPercent(dataset.summary.savingsRate)}
         />
         <ForecastCard forecast={dataset.forecast} />
       </div>
 
       {dataset.alerts.length ? (
-        <Card className="border-border/70">
-          <CardHeader>
-            <CardTitle>Alert Budget</CardTitle>
+        <Card className="border-border/60 bg-card/80">
+          <CardHeader className="pb-0">
+            <CardTitle>Budget</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 lg:grid-cols-2">
             {dataset.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-md border border-border/60 bg-background/60 p-4"
+                className="rounded-md border border-border/60 bg-background/50 p-4"
               >
                 <div className="mb-2 flex items-center justify-between gap-3">
                   <p className="font-medium">{alert.categoryName}</p>
@@ -256,15 +256,15 @@ export default async function Home() {
           categories={dataset.categories}
         />
 
-        <Card className="border-border/70">
-          <CardHeader>
-            <CardTitle>Transaksi Terbaru</CardTitle>
+        <Card className="border-border/60 bg-card/80">
+          <CardHeader className="pb-0">
+            <CardTitle>Terbaru</CardTitle>
           </CardHeader>
-          <CardContent className="space-y-3">
+          <CardContent className="space-y-2">
             {dataset.recentTransactions.map((transaction) => (
               <div
                 key={transaction.id}
-                className="flex flex-col gap-2 rounded-md border border-border/60 bg-background/60 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
+                className="flex flex-col gap-2 rounded-md border border-border/60 bg-background/50 px-4 py-3 sm:flex-row sm:items-center sm:justify-between"
               >
                 <div className="min-w-0">
                   <p className="truncate font-medium">

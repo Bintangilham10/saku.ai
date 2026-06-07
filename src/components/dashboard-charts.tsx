@@ -10,7 +10,6 @@ import {
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -49,10 +48,9 @@ export function DashboardCharts({
 
   return (
     <div className="grid gap-5 xl:grid-cols-[1.3fr_0.9fr]">
-      <Card className="overflow-hidden border-border/70">
-        <CardHeader>
+      <Card className="overflow-hidden border-border/60 bg-card/80">
+        <CardHeader className="pb-0">
           <CardTitle>Tren 6 Bulan</CardTitle>
-          <CardDescription>Pemasukan vs pengeluaran.</CardDescription>
         </CardHeader>
         <CardContent>
           <ChartContainer config={trendConfig} className="h-[230px] w-full sm:h-[280px]">
@@ -68,22 +66,21 @@ export function DashboardCharts({
               <Bar
                 dataKey="income"
                 fill="var(--color-income)"
-                radius={[12, 12, 0, 0]}
+                radius={[6, 6, 0, 0]}
               />
               <Bar
                 dataKey="expenses"
                 fill="var(--color-expenses)"
-                radius={[12, 12, 0, 0]}
+                radius={[6, 6, 0, 0]}
               />
             </BarChart>
           </ChartContainer>
         </CardContent>
       </Card>
 
-      <Card className="overflow-hidden border-border/70">
-        <CardHeader>
-          <CardTitle>Top Kategori Bulan Ini</CardTitle>
-          <CardDescription>Pengeluaran terbesar.</CardDescription>
+      <Card className="overflow-hidden border-border/60 bg-card/80">
+        <CardHeader className="pb-0">
+          <CardTitle>Kategori</CardTitle>
         </CardHeader>
         <CardContent className="grid gap-5 lg:grid-cols-[0.9fr_1.1fr] xl:grid-cols-1">
           <ChartContainer
@@ -110,7 +107,7 @@ export function DashboardCharts({
             {categoryBreakdown.map((item) => (
               <div
                 key={item.name}
-                className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/50 px-3 py-3"
+                className="flex items-center justify-between gap-3 rounded-md border border-border/60 bg-background/50 px-3 py-2.5"
               >
                 <div className="flex min-w-0 items-center gap-3">
                   <span

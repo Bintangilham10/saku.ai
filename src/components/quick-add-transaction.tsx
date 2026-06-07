@@ -2,12 +2,12 @@
 
 import { type FormEvent, useState } from "react";
 import { useRouter } from "next/navigation";
+import { Plus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -88,13 +88,12 @@ export function QuickAddTransaction({
   }
 
   return (
-    <Card className="border-border/70">
-      <CardHeader>
-        <CardTitle>Quick Add</CardTitle>
-        <CardDescription>Input transaksi harian.</CardDescription>
+    <Card className="border-border/60 bg-card/80">
+      <CardHeader className="pb-0">
+        <CardTitle>Tambah Transaksi</CardTitle>
       </CardHeader>
       <CardContent>
-        <form className="grid gap-3" onSubmit={handleSubmit}>
+        <form className="grid gap-4" onSubmit={handleSubmit}>
           <div className="grid gap-3 sm:grid-cols-2">
             <div className="grid gap-2 text-sm">
               <span>Tipe</span>
@@ -106,7 +105,7 @@ export function QuickAddTransaction({
                   <button
                     key={item.value}
                     className={cn(
-                      "h-8 rounded-sm text-sm transition-colors",
+                      "h-8 rounded-sm text-sm font-medium transition-colors",
                       type === item.value
                         ? "bg-card text-foreground shadow-xs"
                         : "text-muted-foreground hover:text-foreground",
@@ -185,7 +184,7 @@ export function QuickAddTransaction({
           <label className="grid gap-2 text-sm">
             <span>Catatan</span>
             <Input
-              placeholder="Contoh: makan malam habis kelas"
+              placeholder="Opsional"
               value={description}
               onChange={(event) => setDescription(event.target.value)}
             />
@@ -196,7 +195,8 @@ export function QuickAddTransaction({
           ) : null}
 
           <Button className="w-full sm:w-fit" disabled={submitting || !amount} type="submit">
-            {submitting ? "Menyimpan..." : "Simpan transaksi"}
+            <Plus className="h-4 w-4" />
+            {submitting ? "Menyimpan..." : "Simpan"}
           </Button>
         </form>
       </CardContent>

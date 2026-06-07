@@ -8,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import {
   Card,
   CardContent,
-  CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
@@ -39,7 +38,7 @@ export default async function TransactionsPage() {
         </>
       }
       mode={dataset.mode}
-      subtitle="Tambah, import, dan cek aktivitas uangmu."
+      subtitle="Uang masuk dan keluar."
       title="Transaksi"
       userName={dataset.userName}
     >
@@ -50,12 +49,9 @@ export default async function TransactionsPage() {
           categories={dataset.categories}
         />
 
-        <Card className="border-border/70">
-          <CardHeader>
+        <Card className="border-border/60 bg-card/80">
+          <CardHeader className="pb-0">
             <CardTitle>Ringkasan</CardTitle>
-            <CardDescription>
-              {dataset.mode === "live" ? "Data live" : "Mode demo"}
-            </CardDescription>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
             {[
@@ -65,7 +61,7 @@ export default async function TransactionsPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-md border border-border/60 bg-background/60 p-4"
+                className="rounded-md border border-border/60 bg-background/50 p-3"
               >
                 <p className="text-sm text-muted-foreground">{item.label}</p>
                 <p className="mt-1 font-semibold tabular-nums">{item.value}</p>
@@ -75,16 +71,18 @@ export default async function TransactionsPage() {
         </Card>
       </div>
 
-      <Card className="border-border/70">
-        <CardHeader>
-          <CardTitle>Daftar Transaksi</CardTitle>
-          <CardDescription>{dataset.transactions.length} transaksi</CardDescription>
+      <Card className="border-border/60 bg-card/80">
+        <CardHeader className="pb-0">
+          <div className="flex items-center justify-between gap-3">
+            <CardTitle>Riwayat</CardTitle>
+            <Badge variant="outline">{dataset.transactions.length}</Badge>
+          </div>
         </CardHeader>
-        <CardContent className="space-y-3">
+        <CardContent className="space-y-2">
           {dataset.transactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="grid gap-3 rounded-md border border-border/60 bg-background/60 px-4 py-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+              className="grid gap-3 rounded-md border border-border/60 bg-background/50 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
             >
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">

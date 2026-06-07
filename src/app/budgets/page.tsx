@@ -24,19 +24,19 @@ export default async function BudgetsPage() {
         <Button asChild>
           <Link href="/chat">
             <MessageSquareText className="h-4 w-4" />
-            Saran AI
+            AI
           </Link>
         </Button>
       }
       mode={dataset.mode}
-      subtitle="Limit kategori dan alert yang perlu dicek."
+      subtitle="Limit per kategori."
       title="Budget"
       userName={dataset.userName}
     >
       <div className="grid gap-4 xl:grid-cols-2">
         {dataset.budgets.map((budget) => (
-          <Card key={budget.id} className="border-border/70">
-            <CardHeader>
+          <Card key={budget.id} className="border-border/60 bg-card/80">
+            <CardHeader className="pb-0">
               <div className="flex items-center justify-between gap-3">
                 <div>
                   <CardTitle>{budget.categoryName}</CardTitle>
@@ -76,17 +76,16 @@ export default async function BudgetsPage() {
         ))}
       </div>
 
-      <Card className="border-border/70">
-        <CardHeader>
-          <CardTitle>Alert & Rekomendasi</CardTitle>
-          <CardDescription>Prioritas bulan ini.</CardDescription>
+      <Card className="border-border/60 bg-card/80">
+        <CardHeader className="pb-0">
+          <CardTitle>Prioritas</CardTitle>
         </CardHeader>
         <CardContent className="space-y-3">
           {dataset.alerts.length ? (
             dataset.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-md border border-border/60 bg-background/60 px-4 py-4"
+                className="rounded-md border border-border/60 bg-background/50 px-4 py-3"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
@@ -105,7 +104,7 @@ export default async function BudgetsPage() {
             ))
           ) : (
             <p className="text-muted-foreground text-sm">
-              Semua budget masih dalam zona aman bulan ini.
+              Semua budget aman.
             </p>
           )}
         </CardContent>

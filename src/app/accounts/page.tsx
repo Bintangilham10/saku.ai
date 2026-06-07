@@ -30,7 +30,7 @@ export default async function AccountsPage() {
   return (
     <SakuShell
       mode={dataset.mode}
-      subtitle="Saldo per dompet, bank, e-wallet, dan tabungan."
+      subtitle="Saldo per akun."
       title="Akun"
       userName={dataset.userName}
     >
@@ -45,31 +45,35 @@ export default async function AccountsPage() {
           const Icon = icon;
 
           return (
-            <Card key={account.id} className="border-border/70">
-              <CardHeader>
-                <div className="flex h-10 w-10 items-center justify-center rounded-md bg-primary/10 text-primary">
-                  <Icon className="h-5 w-5" />
+            <Card key={account.id} className="border-border/60 bg-card/80">
+              <CardHeader className="pb-0">
+                <div className="flex items-start justify-between gap-3">
+                  <div>
+                    <CardTitle className="text-lg">{account.name}</CardTitle>
+                    <CardDescription className="mt-1">
+                      {account.type}
+                      {account.institution ? ` - ${account.institution}` : ""}
+                    </CardDescription>
+                  </div>
+                  <div className="flex h-9 w-9 items-center justify-center rounded-md bg-primary/10 text-primary">
+                    <Icon className="h-4 w-4" />
+                  </div>
                 </div>
-                <CardTitle className="mt-3 text-lg">{account.name}</CardTitle>
-                <CardDescription>
-                  {account.type}
-                  {account.institution ? ` - ${account.institution}` : ""}
-                </CardDescription>
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-muted-foreground text-sm">Estimasi saldo</p>
+                  <p className="text-muted-foreground text-sm">Saldo</p>
                   <p className="text-xl font-semibold tabular-nums">
                     {formatCurrency(balanceByAccount.get(account.id) ?? 0)}
                   </p>
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
-                  <div className="rounded-md border border-border/60 bg-background/60 p-3">
+                  <div className="rounded-md border border-border/60 bg-background/50 p-3">
                     <p className="text-muted-foreground">Aktivitas</p>
                     <p className="mt-1 font-medium">{transactions.length} transaksi</p>
                   </div>
-                  <div className="rounded-md border border-border/60 bg-background/60 p-3">
-                    <p className="text-muted-foreground">Terakhir dipakai</p>
+                  <div className="rounded-md border border-border/60 bg-background/50 p-3">
+                    <p className="text-muted-foreground">Terakhir</p>
                     <p className="mt-1 font-medium">
                       {lastUsed ? formatShortDate(lastUsed) : "Belum ada"}
                     </p>

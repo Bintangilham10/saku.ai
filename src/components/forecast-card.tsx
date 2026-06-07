@@ -37,21 +37,23 @@ export function ForecastCard({ forecast }: ForecastCardProps) {
         : { label: "Aman", variant: "outline" as const };
 
   return (
-    <Card className="border-border/70">
+    <Card className="border-border/60 bg-card/80">
       <CardHeader className="pb-3">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2">
             <Sparkles className="text-primary h-4 w-4" />
-            <CardDescription>Proyeksi Akhir Bulan</CardDescription>
+            <CardDescription className="text-xs font-medium uppercase tracking-[0.08em]">
+              Proyeksi
+            </CardDescription>
           </div>
           <Badge variant={statusBadge.variant}>{statusBadge.label}</Badge>
         </div>
-        <CardTitle className="text-xl">
+        <CardTitle className="text-2xl font-semibold tabular-nums">
           {formatCurrency(forecast.predictedBalance)}
         </CardTitle>
       </CardHeader>
-      <CardContent className="space-y-1.5 text-sm">
-        <p className="text-muted-foreground tabular-nums">
+      <CardContent className="space-y-1 text-sm">
+        <p className="text-xs text-muted-foreground tabular-nums">
           Rentang {formatCurrency(forecast.lower)} -{" "}
           {formatCurrency(forecast.upper)}
         </p>

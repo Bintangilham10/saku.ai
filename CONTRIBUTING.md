@@ -1,175 +1,59 @@
-# Contributing to CodeGuide Starter Kit
+# Contributing to Saku AI
 
-We welcome contributions to the CodeGuide Starter Kit! This document provides guidelines for contributing to the project.
+Thanks for helping improve Saku AI. This guide keeps changes aligned with the product goal: a compact, safe, and usable student finance app.
 
-## Getting Started
+## Setup
 
-1. Fork the repository
-2. Clone your fork locally
-3. Install dependencies: `npm install`
-4. Copy `.env.example` to `.env.local` and configure your environment variables
-5. Start the development server: `npm run dev`
+1. Install dependencies:
 
-## Development Process
-
-### Setting Up Your Development Environment
-
-1. **Prerequisites**:
-   - Node.js 18 or later
-   - npm or yarn package manager
-   - Git
-
-2. **Environment Setup**:
-   - Follow the setup instructions in `SUPABASE_CLERK_SETUP.md`
-   - Ensure all required environment variables are configured
-   - Test the application runs correctly with `npm run dev`
-
-### Making Changes
-
-1. Create a new branch for your feature or bug fix:
    ```bash
-   git checkout -b feature/your-feature-name
+   npm install
    ```
 
-2. Make your changes following our coding standards (see below)
+2. Prepare `.env.local` for Clerk, Supabase, and the AI provider you use.
 
-3. Test your changes thoroughly:
+3. Run the app:
+
    ```bash
-   npm run lint
-   npm run build
+   npm run dev
    ```
 
-4. Commit your changes with a descriptive commit message:
-   ```bash
-   git commit -m "feat: add new feature description"
-   ```
+## Development Principles
 
-5. Push to your fork and create a pull request
+- Prioritize the core product: transactions, dashboard, accounts, budgets, goals, and chat powered by summarized data.
+- Do not show buttons or pages unless the flow works end-to-end.
+- Validate data on the server for every mutation endpoint.
+- Protect privacy: send aggregated summaries to AI, not unnecessary raw data.
+- Use existing components and patterns before adding new abstractions.
+- Keep demo mode working so the app remains usable without full configuration.
 
-## Coding Standards
+## Pre-Commit Checklist
 
-### TypeScript
-- Use strict TypeScript throughout the codebase
-- Define proper types for all props, functions, and API responses
-- Utilize the configured path aliases (`@/`) for imports
+- The UI does not expose unfinished placeholder features.
+- User data remains protected by authentication and ownership checks.
+- The local build succeeds:
 
-### React & Next.js
-- Use server components by default, client components only when needed
-- Follow the established patterns in the codebase
-- Utilize the App Router structure (`/src/app`)
+  ```bash
+  npm run build
+  ```
 
-### Styling
-- Use TailwindCSS for all styling
-- Follow the established design system with shadcn/ui components
-- Support both light and dark themes using CSS custom properties
-- Use existing UI components before creating new ones
+- If data logic changes, add or update tests when available.
+- Documentation is updated when feature scope changes.
 
-### Database
-- All new tables must implement Row Level Security (RLS)
-- Use Clerk user IDs (`auth.jwt() ->> 'sub'`) in RLS policies
-- Follow the established patterns in `supabase/migrations/`
+## Database Migrations
 
-### Code Organization
-- Place reusable utilities in `src/lib/`
-- Use PascalCase for components
-- Group related functionality in appropriate directories
-- Keep components focused and single-purpose
+Add schema changes in `supabase/migrations/`. For tables that store user data:
 
-## Pull Request Guidelines
+- Add a `user_id` column.
+- Enable Row Level Security.
+- Make sure policies only allow access to the data owner.
+- Add indexes on frequently filtered columns, especially `user_id` and date fields.
 
-### Before Submitting
-- [ ] Code follows the project's style guidelines
-- [ ] Self-review of the code has been performed
-- [ ] Code is properly commented where necessary
-- [ ] Changes have been tested locally
-- [ ] Lint checks pass (`npm run lint`)
-- [ ] Build succeeds (`npm run build`)
+## Pull Request
 
-### PR Description
-Please include:
-- Clear description of what the PR does
-- Why the change is needed
-- Screenshots for UI changes
-- Any breaking changes or migration notes
+Briefly explain:
 
-### Review Process
-- All PRs require at least one review
-- Address all review feedback before merging
-- Maintain a clean git history
-
-## Types of Contributions
-
-### Bug Reports
-When filing a bug report, please include:
-- Clear description of the issue
-- Steps to reproduce
-- Expected vs actual behavior
-- Environment details (OS, Node version, etc.)
-- Screenshots or error logs if applicable
-
-### Feature Requests
-For new features:
-- Describe the problem you're solving
-- Explain why this feature would be beneficial
-- Consider backward compatibility
-- Discuss implementation approach if applicable
-
-### Documentation
-- Keep documentation up to date with code changes
-- Improve existing documentation clarity
-- Add examples for complex features
-- Update CLAUDE.md when adding new patterns
-
-## Code Examples
-
-### Adding a New Component
-```typescript
-// src/components/ui/my-component.tsx
-import { cn } from "@/lib/utils"
-
-interface MyComponentProps {
-  className?: string
-  children: React.ReactNode
-}
-
-export function MyComponent({ className, children }: MyComponentProps) {
-  return (
-    <div className={cn("base-styles", className)}>
-      {children}
-    </div>
-  )
-}
-```
-
-### Database Migration Example
-```sql
--- supabase/migrations/002_new_feature.sql
-CREATE TABLE example_table (
-  id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
-  user_id TEXT NOT NULL,
-  name TEXT NOT NULL,
-  created_at TIMESTAMPTZ DEFAULT NOW()
-);
-
-ALTER TABLE example_table ENABLE ROW LEVEL SECURITY;
-
-CREATE POLICY "Users can manage own records" ON example_table
-  FOR ALL USING (auth.jwt() ->> 'sub' = user_id);
-```
-
-## Community Guidelines
-
-- Be respectful and inclusive
-- Help others learn and grow
-- Provide constructive feedback
-- Follow our code of conduct
-- Ask questions if you're unsure about anything
-
-## Getting Help
-
-- Check existing issues and discussions
-- Review the project documentation
-- Ask questions in pull request discussions
-- Reach out to maintainers for guidance
-
-Thank you for contributing to CodeGuide Starter Kit!
+- What changed.
+- Why the change is needed.
+- What needs manual testing.
+- Screenshots for UI changes.

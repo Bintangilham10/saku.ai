@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Download, MessageSquareText, Upload } from "lucide-react";
+import { MessageSquareText } from "lucide-react";
 
 import { QuickAddTransaction } from "@/components/quick-add-transaction";
 import { SakuShell } from "@/components/saku-shell";
@@ -20,22 +20,12 @@ export default async function TransactionsPage() {
   return (
     <SakuShell
       actions={
-        <>
-          <Button variant="outline">
-            <Upload className="h-4 w-4" />
-            Import
-          </Button>
-          <Button variant="outline">
-            <Download className="h-4 w-4" />
-            Export
-          </Button>
-          <Button asChild>
-            <Link href="/chat">
-              <MessageSquareText className="h-4 w-4" />
-              Chat AI
-            </Link>
-          </Button>
-        </>
+        <Button asChild>
+          <Link href="/chat">
+            <MessageSquareText className="h-4 w-4" />
+            Chat AI
+          </Link>
+        </Button>
       }
       mode={dataset.mode}
       subtitle="Uang masuk dan keluar."

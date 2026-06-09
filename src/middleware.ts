@@ -8,7 +8,6 @@ const isProtectedRoute = createRouteMatcher([
   "/chat(.*)",
   "/api/dashboard(.*)",
   "/api/transactions(.*)",
-  "/api/imports(.*)",
   "/api/chat(.*)",
   "/api/recurring(.*)",
 ]);

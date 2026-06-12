@@ -10,9 +10,7 @@ import {
 } from "date-fns";
 
 import {
-  createSupabaseAdminClient,
   createSupabaseServerClient,
-  hasSupabaseServiceRole,
   isSupabaseConfigured,
 } from "@/lib/supabase";
 import {
@@ -444,10 +442,6 @@ function getDemoDataset(userName = "Mahasiswa"): SakuDataset {
 async function getSupabaseClient() {
   if (!isSupabaseConfigured()) {
     return null;
-  }
-
-  if (hasSupabaseServiceRole()) {
-    return createSupabaseAdminClient();
   }
 
   return createSupabaseServerClient();

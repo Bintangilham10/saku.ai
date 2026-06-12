@@ -9,7 +9,6 @@ const isProtectedRoute = createRouteMatcher([
   "/api/dashboard(.*)",
   "/api/transactions(.*)",
   "/api/chat(.*)",
-  "/api/recurring(.*)",
 ]);
 
 const hasClerkKeys = Boolean(

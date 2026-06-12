@@ -39,7 +39,6 @@ Saku AI adalah aplikasi web asisten keuangan untuk mahasiswa. Aplikasi ini memba
 
    NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
    NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
-   SUPABASE_SERVICE_ROLE_KEY=eyJ...
 
    OPENAI_API_KEY=sk-...
    # atau
@@ -70,7 +69,6 @@ src/
     api/
       chat/route.ts
       dashboard/summary/route.ts
-      recurring/confirm/route.ts
       transactions/route.ts
   components/
     chat.tsx
@@ -100,11 +98,10 @@ Skema Supabase ada di `supabase/migrations/`. Tabel utama mencakup:
 - `budgets`
 - `goals`
 - `recurring_rules`
-- `ai_conversations`
-- `ai_messages`
-- `audit_logs`
 
 Setiap tabel data pengguna memakai `user_id` dan Row Level Security agar data antar pengguna tetap terpisah.
+
+Tabel untuk import, percakapan tersimpan, dan audit masih tersedia di skema sebagai ruang pengembangan berikutnya, tetapi belum menjadi fitur aktif di UI.
 
 ## Catatan Fitur
 

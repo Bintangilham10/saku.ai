@@ -1,125 +1,86 @@
-# Clerk + Supabase Integration Setup Guide
+# Clerk + Supabase Setup
 
-This guide will help you set up the integration between Clerk and Supabase using the modern third-party auth approach. This setup uses Clerk for user management and Supabase for your application data.
+Saku AI uses Clerk as the identity provider and Supabase as the application database. All application data access happens on the server with the signed-in Clerk user's token.
 
 ## Prerequisites
 
-- A Clerk account and application
+- A Clerk application
 - A Supabase project
-- Next.js application with both `@clerk/nextjs` and `@supabase/supabase-js` installed
+- The project dependencies installed with `npm install`
 
-## Step 1: Configure Supabase Third-Party Auth
+## 1. Configure Clerk in Supabase
 
-1. Go to your **Supabase Dashboard**
-2. Navigate to **Authentication > Integrations**
-3. Add a new **Third-Party Auth** integration
-4. Select **Clerk** from the list
-5. Follow the configuration steps provided by Supabase
+1. Open the Supabase Dashboard.
+2. Go to **Authentication > Sign In / Providers** or **Authentication > Integrations**, depending on the current dashboard layout.
+3. Add Clerk as a third-party authentication provider.
+4. Follow the Clerk and Supabase instructions to make the Clerk session token available to Supabase.
 
-## Step 2: Configure Clerk for Supabase
+The `sub` claim must contain the Clerk user ID because the database policies map that value to `app_users.clerk_id`.
 
-1. Visit **Clerk's Connect with Supabase** page in your Clerk dashboard
-2. Follow the setup instructions to configure your Clerk instance for Supabase compatibility
-3. This will set up the necessary JWT claims and configuration
+## 2. Configure Environment Variables
 
-## Step 3: Environment Variables
+Create `.env.local`:
 
-Copy your `.env.example` to `.env.local` and fill in the required values:
-
-```bash
-# Clerk Authentication
+```env
 NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY=pk_test_...
 CLERK_SECRET_KEY=sk_test_...
 
-# Supabase
 NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
 NEXT_PUBLIC_SUPABASE_ANON_KEY=eyJ...
+
+OPENAI_API_KEY=sk-...
+# or
+ANTHROPIC_API_KEY=sk-ant-...
 ```
 
-## Step 4: Test the Integration
+Saku AI does not require a Supabase service-role key for normal application requests. Keeping that key out of the app configuration preserves Row Level Security as the primary data boundary.
 
-1. Start your Next.js application
-2. Sign up/in through Clerk
-3. Try making authenticated requests to Supabase
+## 3. Apply Database Migrations
 
-## Usage Examples
+Apply the SQL files in `supabase/migrations/` in numeric order.
 
-### Server-side data fetching:
+The initial migration creates the application tables, helper functions, indexes, triggers, and Row Level Security policies. The recurring detection migration adds metadata used by the recurring insight feature.
+
+## 4. Verify the Integration
+
+1. Run `npm run dev`.
+2. Sign in through Clerk.
+3. Add a transaction.
+4. Confirm that the transaction appears only for the signed-in user.
+5. Review Supabase logs if a request is rejected by Row Level Security.
+
+## Server-Side Usage
+
+Use the authenticated server client:
 
 ```typescript
-import { createSupabaseServerClient } from '@/lib/supabase'
+import { createSupabaseServerClient } from "@/lib/supabase";
 
-export async function getData() {
-  const supabase = await createSupabaseServerClient()
-  
-  const { data, error } = await supabase
-    .from('your_table')
-    .select('*')
-  
-  return data
+const supabase = await createSupabaseServerClient();
+
+if (!supabase) {
+  throw new Error("Supabase is not configured.");
 }
+
+const { data, error } = await supabase
+  .from("transactions")
+  .select("*")
+  .order("date", { ascending: false });
 ```
 
-### Client-side usage:
-
-```typescript
-import { supabase } from '@/lib/supabase'
-import { useAuth } from '@clerk/nextjs'
-
-function MyComponent() {
-  const { getToken } = useAuth()
-
-  const fetchData = async () => {
-    const token = await getToken()
-    
-    const { data, error } = await supabase
-      .from('your_table')
-      .select('*')
-      .auth(token)
-  }
-}
-```
-
-### Get current user (from Clerk):
-
-```typescript
-import { getCurrentUser } from '@/lib/user'
-
-export async function ProfilePage() {
-  const user = await getCurrentUser()
-  
-  if (!user) {
-    redirect('/sign-in')
-  }
-  
-  return <div>Welcome {user.firstName}!</div>
-}
-```
-
-## Row Level Security (RLS)
-
-Create RLS policies in your Supabase tables that use Clerk user IDs. Example:
-
-```sql
--- Enable RLS on your table
-ALTER TABLE your_table ENABLE ROW LEVEL SECURITY;
-
--- Allow users to read their own data
-CREATE POLICY "Users can read own data" ON your_table
-  FOR SELECT USING (auth.jwt() ->> 'sub' = user_id);
-
--- Allow users to insert their own data
-CREATE POLICY "Users can insert own data" ON your_table
-  FOR INSERT WITH CHECK (auth.jwt() ->> 'sub' = user_id);
-```
+Do not create a browser-wide Supabase client with privileged credentials. Mutations should go through authenticated route handlers or server actions that validate input and ownership.
 
 ## Troubleshooting
 
-### Authentication errors
-- Ensure third-party auth is properly configured in Supabase
-- Verify your Supabase URL and keys are correct
-- Check that RLS policies allow the operations you're trying to perform
+### Requests return unauthorized
 
-### Token issues
-- Make sure you're using `createSupabaseServerClient()` for server-side operations
-- For client-side, ensure you're passing the Clerk token to Supabase
+- Verify both Clerk environment variables.
+- Confirm the user has an active Clerk session.
+- Confirm the protected route is included in `src/middleware.ts`.
+
+### Supabase returns an RLS error
+
+- Confirm the Clerk token is accepted by Supabase.
+- Inspect the token's `sub` claim.
+- Confirm an `app_users` row exists with the matching `clerk_id`.
+- Review the policies in `supabase/migrations/001_example_tables_with_rls.sql`.

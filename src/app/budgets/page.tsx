@@ -1,22 +1,16 @@
-import Link from "next/link";
-import { MessageSquareText } from "lucide-react";
+import Link from "next/link"
+import { MessageSquareText } from "lucide-react"
 
-import { SakuShell } from "@/components/saku-shell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Progress } from "@/components/ui/progress";
-import { formatCurrency } from "@/lib/format";
-import { getSakuDataset } from "@/lib/saku-data";
+import { SakuShell } from "@/components/saku-shell"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
+import { Progress } from "@/components/ui/progress"
+import { formatCurrency } from "@/lib/format"
+import { getSakuDataset } from "@/lib/saku-data"
 
 export default async function BudgetsPage() {
-  const dataset = await getSakuDataset();
+  const dataset = await getSakuDataset()
 
   return (
     <SakuShell
@@ -85,30 +79,24 @@ export default async function BudgetsPage() {
             dataset.alerts.map((alert) => (
               <div
                 key={alert.id}
-                className="rounded-md border border-border/60 bg-background/50 px-4 py-3"
+                className="border-border/60 bg-background/50 rounded-md border px-4 py-3"
               >
                 <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                   <div className="min-w-0">
                     <p className="font-medium">{alert.categoryName}</p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                      {alert.message}
-                    </p>
+                    <p className="text-muted-foreground mt-1 text-sm">{alert.message}</p>
                   </div>
-                  <Badge
-                    variant={alert.severity === "danger" ? "destructive" : "secondary"}
-                  >
+                  <Badge variant={alert.severity === "danger" ? "destructive" : "secondary"}>
                     {Math.round(alert.progress * 100)}%
                   </Badge>
                 </div>
               </div>
             ))
           ) : (
-            <p className="text-muted-foreground text-sm">
-              Semua budget aman.
-            </p>
+            <p className="text-muted-foreground text-sm">Semua budget aman.</p>
           )}
         </CardContent>
       </Card>
     </SakuShell>
-  );
+  )
 }

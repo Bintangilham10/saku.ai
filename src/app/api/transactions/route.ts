@@ -1,8 +1,8 @@
-import { auth } from "@clerk/nextjs/server";
-import { NextResponse } from "next/server";
-import { z } from "zod";
+import { auth } from "@clerk/nextjs/server"
+import { NextResponse } from "next/server"
+import { z } from "zod"
 
-import { createTransaction, listTransactions } from "@/lib/saku-data";
+import { createTransaction, listTransactions } from "@/lib/saku-data"
 
 const transactionSchema = z.object({
   accountId: z.string().min(1).nullable().optional(),
@@ -16,37 +16,35 @@ const transactionSchema = z.object({
   status: z.enum(["pending", "cleared"]).optional(),
   tags: z.array(z.string()).optional(),
   type: z.enum(["debit", "credit"]),
-});
+})
 
 export async function GET(request: Request) {
-  const { userId } = await auth();
+  const { userId } = await auth()
 
   if (!userId) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
   }
 
-  const { searchParams } = new URL(request.url);
+  const { searchParams } = new URL(request.url)
   const payload = await listTransactions({
     from: searchParams.get("from"),
     to: searchParams.get("to"),
-    limit: searchParams.get("limit")
-      ? Number(searchParams.get("limit"))
-      : undefined,
-  });
+    limit: searchParams.get("limit") ? Number(searchParams.get("limit")) : undefined,
+  })
 
-  return NextResponse.json(payload);
+  return NextResponse.json(payload)
 }
 
 export async function POST(request: Request) {
   try {
-    const { userId } = await auth();
+    const { userId } = await auth()
 
     if (!userId) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
     }
 
-    const body = await request.json();
-    const parsed = transactionSchema.parse(body);
+    const body = await request.json()
+    const parsed = transactionSchema.parse(body)
     const transaction = await createTransaction({
       accountId: parsed.accountId ?? null,
       amount: parsed.amount,
@@ -59,19 +57,18 @@ export async function POST(request: Request) {
       status: parsed.status,
       tags: parsed.tags,
       type: parsed.type,
-    });
+    })
 
-    return NextResponse.json({ data: transaction }, { status: 201 });
+    return NextResponse.json({ data: transaction }, { status: 201 })
   } catch (error) {
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { error: error.issues[0]?.message ?? "Payload tidak valid." },
-        { status: 400 },
-      );
+        { status: 400 }
+      )
     }
 
-    const message =
-      error instanceof Error ? error.message : "Gagal menyimpan transaksi.";
+    const message = error instanceof Error ? error.message : "Gagal menyimpan transaksi."
     const status =
       message === "Unauthorized"
         ? 401
@@ -79,11 +76,8 @@ export async function POST(request: Request) {
           ? 400
           : message.includes("belum dikonfigurasi")
             ? 503
-            : 500;
+            : 500
 
-    return NextResponse.json(
-      { error: message },
-      { status },
-    );
+    return NextResponse.json({ error: message }, { status })
   }
 }

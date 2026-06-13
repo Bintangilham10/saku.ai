@@ -1,13 +1,13 @@
-import Link from "next/link";
-import { ReceiptText } from "lucide-react";
+import Link from "next/link"
+import { ReceiptText } from "lucide-react"
 
-import Chat from "@/components/chat";
-import { SakuShell } from "@/components/saku-shell";
-import { Button } from "@/components/ui/button";
-import { getSakuDataset } from "@/lib/saku-data";
+import Chat from "@/components/chat"
+import { SakuShell } from "@/components/saku-shell"
+import { Button } from "@/components/ui/button"
+import { getSakuDataset } from "@/lib/saku-data"
 
 export default async function ChatPage() {
-  const dataset = await getSakuDataset();
+  const dataset = await getSakuDataset()
 
   return (
     <SakuShell
@@ -26,5 +26,5 @@ export default async function ChatPage() {
     >
       <Chat mode={dataset.mode} summary={dataset.aiSummary} />
     </SakuShell>
-  );
+  )
 }

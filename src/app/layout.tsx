@@ -1,19 +1,19 @@
-import type { Metadata } from "next";
-import { ClerkProvider } from "@clerk/nextjs";
+import type { Metadata } from "next"
+import { ClerkProvider } from "@clerk/nextjs"
 
-import { ThemeProvider } from "@/components/theme-provider";
-import "./globals.css";
+import { ThemeProvider } from "@/components/theme-provider"
+import "./globals.css"
 
 export const metadata: Metadata = {
   title: "Saku AI",
   description:
     "Asisten keuangan pintar untuk mahasiswa dengan dashboard, budget tracker, dan chat AI.",
-};
+}
 
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: React.ReactNode
 }>) {
   const app = (
     <html lang="id" suppressHydrationWarning>
@@ -28,15 +28,11 @@ export default function RootLayout({
         </ThemeProvider>
       </body>
     </html>
-  );
+  )
 
   if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
-    return app;
+    return app
   }
 
-  return (
-    <ClerkProvider>
-      {app}
-    </ClerkProvider>
-  );
+  return <ClerkProvider>{app}</ClerkProvider>
 }

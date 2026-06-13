@@ -1,21 +1,16 @@
-import Link from "next/link";
-import { MessageSquareText } from "lucide-react";
+import Link from "next/link"
+import { MessageSquareText } from "lucide-react"
 
-import { QuickAddTransaction } from "@/components/quick-add-transaction";
-import { SakuShell } from "@/components/saku-shell";
-import { Badge } from "@/components/ui/badge";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { formatCurrency, formatShortDate } from "@/lib/format";
-import { getSakuDataset } from "@/lib/saku-data";
+import { QuickAddTransaction } from "@/components/quick-add-transaction"
+import { SakuShell } from "@/components/saku-shell"
+import { Badge } from "@/components/ui/badge"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
+import { formatCurrency, formatShortDate } from "@/lib/format"
+import { getSakuDataset } from "@/lib/saku-data"
 
 export default async function TransactionsPage() {
-  const dataset = await getSakuDataset();
+  const dataset = await getSakuDataset()
 
   return (
     <SakuShell
@@ -51,9 +46,9 @@ export default async function TransactionsPage() {
             ].map((item) => (
               <div
                 key={item.label}
-                className="rounded-md border border-border/60 bg-background/50 p-3"
+                className="border-border/60 bg-background/50 rounded-md border p-3"
               >
-                <p className="text-sm text-muted-foreground">{item.label}</p>
+                <p className="text-muted-foreground text-sm">{item.label}</p>
                 <p className="mt-1 font-semibold tabular-nums">{item.value}</p>
               </div>
             ))}
@@ -72,39 +67,33 @@ export default async function TransactionsPage() {
           {dataset.transactions.map((transaction) => (
             <div
               key={transaction.id}
-              className="grid gap-3 rounded-md border border-border/60 bg-background/50 px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+              className="border-border/60 bg-background/50 grid gap-3 rounded-md border px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
             >
               <div className="min-w-0 space-y-1">
                 <div className="flex flex-wrap items-center gap-2">
                   <p className="truncate font-medium">
                     {transaction.merchant ?? transaction.description ?? "Transaksi"}
                   </p>
-                  <Badge variant="outline">
-                    {transaction.categoryName ?? "Tanpa kategori"}
-                  </Badge>
+                  <Badge variant="outline">{transaction.categoryName ?? "Tanpa kategori"}</Badge>
                   <Badge variant="secondary">{transaction.accountName ?? "Tanpa akun"}</Badge>
                 </div>
-                <p className="text-sm text-muted-foreground">
-                  {formatShortDate(transaction.date)}
-                </p>
+                <p className="text-muted-foreground text-sm">{formatShortDate(transaction.date)}</p>
               </div>
               <div className="text-left md:text-right">
                 <p
                   className={
-                    transaction.type === "credit"
-                      ? "font-semibold text-primary"
-                      : "font-semibold"
+                    transaction.type === "credit" ? "text-primary font-semibold" : "font-semibold"
                   }
                 >
                   {transaction.type === "credit" ? "+" : "-"}
                   {formatCurrency(transaction.amount)}
                 </p>
-                <p className="text-sm text-muted-foreground">{transaction.status}</p>
+                <p className="text-muted-foreground text-sm">{transaction.status}</p>
               </div>
             </div>
           ))}
         </CardContent>
       </Card>
     </SakuShell>
-  );
+  )
 }

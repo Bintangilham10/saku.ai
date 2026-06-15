@@ -11,7 +11,7 @@ function resolveModel() {
   }
 
   if (process.env.ANTHROPIC_API_KEY) {
-    return anthropic("claude-3-5-haiku-latest")
+    return anthropic("claude-haiku-4-5")
   }
 
   return null
@@ -36,10 +36,8 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages, summary } = await req.json()
+    const { messages } = await req.json()
     const dataset = await getSakuDataset()
-    const safeSummary =
-      typeof summary === "string" && summary.trim().length > 0 ? summary : dataset.aiSummary
 
     const result = streamText({
       model,
@@ -50,7 +48,7 @@ export async function POST(req: Request) {
         "Jika user meminta saran, prioritaskan 3 langkah hemat yang realistis.",
         "Jangan mengklaim kepastian untuk masa depan dan hindari saran investasi profesional.",
         "Gunakan konteks ringkasan keuangan berikut sebagai dasar jawaban:",
-        safeSummary,
+        dataset.aiSummary,
       ].join("\n\n"),
       messages: Array.isArray(messages) ? messages : [],
       temperature: 0.5,

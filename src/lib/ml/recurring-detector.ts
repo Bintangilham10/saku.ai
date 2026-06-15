@@ -3,27 +3,10 @@ import { addDays, differenceInCalendarDays, format, parseISO } from "date-fns";
 import type { Transaction } from "@/lib/saku-types";
 import { coefficientOfVariation, median } from "@/lib/ml/stats";
 import type { RecurringCandidate } from "@/lib/ml/types";
+import { bucketAmount, normalizeMerchant } from "@/lib/ml/recurring-utils";
 
 const MIN_OCCURRENCES = 3;
 const MIN_SPAN_DAYS = 45;
-const AMOUNT_BUCKET_IDR = 5000;
-
-function normalizeMerchant(raw: string | null) {
-  if (!raw) {
-    return "";
-  }
-
-  return raw
-    .toLowerCase()
-    .replace(/\d+/g, "")
-    .replace(/[^a-z\s]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-}
-
-function bucketAmount(amount: number) {
-  return Math.round(amount / AMOUNT_BUCKET_IDR) * AMOUNT_BUCKET_IDR;
-}
 
 function classifyCadence(intervalDays: number): RecurringCandidate["cadence"] {
   if (intervalDays >= 6 && intervalDays <= 8) {

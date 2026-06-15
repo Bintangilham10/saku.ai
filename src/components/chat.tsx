@@ -35,7 +35,6 @@ export default function Chat({ summary, mode }: ChatProps) {
     isLoading: chatLoading,
     setInput,
   } = useChat({
-    body: { summary },
     onError: (chatError) => {
       console.error("Chat error:", chatError);
     },

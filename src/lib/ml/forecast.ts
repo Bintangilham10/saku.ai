@@ -3,12 +3,15 @@ import {
   endOfMonth,
   format,
   isAfter,
-  isBefore,
   parseISO,
   subDays,
 } from "date-fns";
 
 import type { Transaction } from "@/lib/saku-types";
+import {
+  matchesRecurringCandidate,
+  projectedRecurringSpend,
+} from "@/lib/ml/recurring-utils";
 import {
   clamp,
   exponentialSmoothing,
@@ -68,22 +71,6 @@ function computeCurrentBalance(transactions: Transaction[], asOf: Date) {
     return transaction.type === "credit"
       ? balance + transaction.amount
       : balance - transaction.amount;
-  }, 0);
-}
-
-function projectedRecurringSpend(
-  recurring: RecurringCandidate[],
-  asOf: Date,
-  horizon: Date,
-) {
-  return recurring.reduce((total, candidate) => {
-    const next = parseISO(candidate.nextOccurrence);
-
-    if (isBefore(next, asOf) || isAfter(next, horizon)) {
-      return total;
-    }
-
-    return total + candidate.amount * candidate.confidence;
   }, 0);
 }
 
@@ -157,11 +144,12 @@ export function forecastEndOfMonth(
   }
 
   const window = Math.min(HISTORY_WINDOW_DAYS, spanDays);
-  const recurringDates = new Set(recurring.map((item) => item.lastDate));
   const variableTransactions = transactions.filter(
     (transaction) =>
       transaction.type === "debit" &&
-      !recurringDates.has(transaction.date),
+      !recurring.some((candidate) =>
+        matchesRecurringCandidate(transaction, candidate),
+      ),
   );
 
   const series = dailySeriesForWindow(variableTransactions, window, reference);

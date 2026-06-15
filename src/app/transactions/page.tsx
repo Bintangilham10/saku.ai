@@ -11,6 +11,7 @@ import { getSakuDataset } from "@/lib/saku-data"
 
 export default async function TransactionsPage() {
   const dataset = await getSakuDataset()
+  const visibleTransactions = dataset.transactions.slice(0, 100)
 
   return (
     <SakuShell
@@ -64,7 +65,7 @@ export default async function TransactionsPage() {
           </div>
         </CardHeader>
         <CardContent className="space-y-2">
-          {dataset.transactions.map((transaction) => (
+          {visibleTransactions.map((transaction) => (
             <div
               key={transaction.id}
               className="border-border/60 bg-background/50 grid gap-3 rounded-md border px-4 py-3 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"

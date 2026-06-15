@@ -10,6 +10,10 @@ import {
 } from "date-fns";
 
 import {
+  isDateWithinBudgetRange,
+  resolveBudgetDateRange,
+} from "@/lib/budget-period";
+import {
   createSupabaseServerClient,
   isSupabaseConfigured,
 } from "@/lib/supabase";
@@ -24,6 +28,7 @@ import {
 import { detectRecurringTransactions } from "@/lib/ml/recurring-detector";
 import { forecastEndOfMonth } from "@/lib/ml/forecast";
 import type { ForecastResult, RecurringCandidate } from "@/lib/ml/types";
+import { fetchAllPages } from "@/lib/pagination";
 import type {
   Account,
   AppUserProfile,
@@ -142,6 +147,7 @@ function buildBudgets(
 
   return budgets.map<Budget>((budget) => {
     const category = categories.find((item) => item.id === budget.categoryId);
+    const dateRange = resolveBudgetDateRange(budget, now);
     const spentAmount = transactions
       .filter((transaction) => {
         if (transaction.type !== "debit") {
@@ -152,7 +158,7 @@ function buildBudgets(
           return false;
         }
 
-        return isSameMonth(parseISO(transaction.date), now);
+        return isDateWithinBudgetRange(transaction.date, dateRange);
       })
       .reduce((total, item) => total + item.amount, 0);
 
@@ -193,8 +199,8 @@ function buildAlerts(budgets: Budget[]): BudgetAlert[] {
       severity: budget.progress >= 1 ? "danger" : "warning",
       message:
         budget.progress >= 1
-          ? `${budget.categoryName} sudah melewati limit bulan ini.`
-          : `${budget.categoryName} sudah menyentuh 90% budget bulan ini.`,
+          ? `${budget.categoryName} sudah melewati limit periode budget ini.`
+          : `${budget.categoryName} sudah menyentuh 90% periode budget ini.`,
     }));
 }
 
@@ -606,20 +612,26 @@ async function fetchCategories(client: SupabaseLikeClient, appUserId: string) {
 }
 
 async function fetchTransactions(client: SupabaseLikeClient, appUserId: string) {
-  const result = await client
-    .from("transactions")
-    .select(
-      "id, user_id, account_id, amount, currency, type, category_id, merchant, description, date, status, imported, tags, created_at",
-    )
-    .eq("user_id", appUserId)
-    .order("date", { ascending: false })
-    .limit(100);
+  const transactions = await fetchAllPages(async (from, to) => {
+    const result = await client
+      .from("transactions")
+      .select(
+        "id, user_id, account_id, amount, currency, type, category_id, merchant, description, date, status, imported, tags, created_at",
+      )
+      .eq("user_id", appUserId)
+      .order("date", { ascending: false })
+      .order("created_at", { ascending: false })
+      .order("id", { ascending: false })
+      .range(from, to);
 
-  if (result.error) {
-    throw result.error;
-  }
+    if (result.error) {
+      throw result.error;
+    }
 
-  return (result.data ?? []).map<Transaction>((transaction) => ({
+    return result.data ?? [];
+  });
+
+  return transactions.map<Transaction>((transaction) => ({
     id: transaction.id,
     userId: transaction.user_id,
     accountId: transaction.account_id,

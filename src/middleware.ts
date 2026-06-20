@@ -1,5 +1,7 @@
 import { clerkMiddleware, createRouteMatcher } from "@clerk/nextjs/server";
 
+import { isClerkConfigured } from "@/lib/server-config";
+
 const isProtectedRoute = createRouteMatcher([
   "/transactions(.*)",
   "/accounts(.*)",
@@ -11,11 +13,7 @@ const isProtectedRoute = createRouteMatcher([
   "/api/chat(.*)",
 ]);
 
-const hasClerkKeys = Boolean(
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
-);
-
-const middleware = hasClerkKeys
+const middleware = isClerkConfigured()
   ? clerkMiddleware(async (auth, req) => {
       if (isProtectedRoute(req)) {
         await auth.protect();

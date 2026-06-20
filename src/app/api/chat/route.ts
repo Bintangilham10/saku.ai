@@ -4,6 +4,7 @@ import { auth } from "@clerk/nextjs/server"
 import { streamText } from "ai"
 
 import { getSakuDataset } from "@/lib/saku-data"
+import { isClerkConfigured, isSupabaseConfigured } from "@/lib/server-config"
 
 function resolveModel() {
   if (process.env.OPENAI_API_KEY) {
@@ -18,6 +19,13 @@ function resolveModel() {
 }
 
 export async function POST(req: Request) {
+  if (!isClerkConfigured() || !isSupabaseConfigured()) {
+    return Response.json(
+      { error: "Chat AI tidak tersedia dalam mode demo." },
+      { status: 503 }
+    )
+  }
+
   const { userId } = await auth()
 
   if (!userId) {

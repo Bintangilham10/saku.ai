@@ -3,6 +3,14 @@ import { NextResponse } from "next/server"
 import { z } from "zod"
 
 import { createTransaction, listTransactions } from "@/lib/saku-data"
+import { isClerkConfigured, isSupabaseConfigured } from "@/lib/server-config"
+
+function demoModeResponse() {
+  return NextResponse.json(
+    { error: "Transaction API tidak tersedia dalam mode demo." },
+    { status: 503 }
+  )
+}
 
 const transactionSchema = z.object({
   accountId: z.string().min(1).nullable().optional(),
@@ -19,6 +27,10 @@ const transactionSchema = z.object({
 })
 
 export async function GET(request: Request) {
+  if (!isClerkConfigured() || !isSupabaseConfigured()) {
+    return demoModeResponse()
+  }
+
   const { userId } = await auth()
 
   if (!userId) {
@@ -37,6 +49,10 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   try {
+    if (!isClerkConfigured() || !isSupabaseConfigured()) {
+      return demoModeResponse()
+    }
+
     const { userId } = await auth()
 
     if (!userId) {

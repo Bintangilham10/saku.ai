@@ -26,8 +26,6 @@ const navItems = [
   { href: "/chat", label: "Chat AI", icon: MessageSquareText },
 ];
 
-const hasClerk = Boolean(process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY);
-
 type SakuShellProps = {
   title: string;
   subtitle: string;
@@ -46,6 +44,7 @@ export function SakuShell({
   actions,
 }: SakuShellProps) {
   const pathname = usePathname();
+  const hasClerk = mode === "live";
 
   return (
     <div className="min-h-screen">

@@ -13,6 +13,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress"
 import { formatCurrency, formatPercent, formatShortDate } from "@/lib/format"
 import { getSakuDataset } from "@/lib/saku-data"
+import { isClerkConfigured } from "@/lib/server-config"
 
 function SummaryCard({ label, value, hint }: { label: string; value: string; hint: string }) {
   return (
@@ -136,9 +137,7 @@ function SignedOutLanding({ authEnabled }: { authEnabled: boolean }) {
 }
 
 export default async function Home() {
-  const authEnabled = Boolean(
-    process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY
-  )
+  const authEnabled = isClerkConfigured()
   const { userId } = authEnabled ? await auth() : { userId: null }
 
   if (!userId) {

@@ -2,6 +2,7 @@ import type { Metadata } from "next"
 import { ClerkProvider } from "@clerk/nextjs"
 
 import { ThemeProvider } from "@/components/theme-provider"
+import { isClerkConfigured } from "@/lib/server-config"
 import "./globals.css"
 
 export const metadata: Metadata = {
@@ -30,7 +31,7 @@ export default function RootLayout({
     </html>
   )
 
-  if (!process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY) {
+  if (!isClerkConfigured()) {
     return app
   }
 

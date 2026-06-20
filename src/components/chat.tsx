@@ -117,12 +117,16 @@ export default function Chat({ summary, mode }: ChatProps) {
           <form className="flex flex-col gap-3 sm:flex-row" onSubmit={handleSubmit}>
             <Input
               className="h-11 flex-1"
-              disabled={chatLoading}
+              disabled={chatLoading || mode === "demo"}
               placeholder="Tulis pertanyaan"
               value={input}
               onChange={handleInputChange}
             />
-            <Button className="h-11 px-6" disabled={chatLoading || !input.trim()} type="submit">
+            <Button
+              className="h-11 px-6"
+              disabled={mode === "demo" || chatLoading || !input.trim()}
+              type="submit"
+            >
               <Send className="h-4 w-4" />
               {chatLoading ? "..." : "Kirim"}
             </Button>

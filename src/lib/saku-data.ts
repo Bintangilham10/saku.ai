@@ -13,10 +13,8 @@ import {
   isDateWithinBudgetRange,
   resolveBudgetDateRange,
 } from "@/lib/budget-period";
-import {
-  createSupabaseServerClient,
-  isSupabaseConfigured,
-} from "@/lib/supabase";
+import { createSupabaseServerClient } from "@/lib/supabase";
+import { loadLiveData } from "@/lib/live-data";
 import {
   demoAccounts,
   demoBudgets,
@@ -29,6 +27,10 @@ import { detectRecurringTransactions } from "@/lib/ml/recurring-detector";
 import { forecastEndOfMonth } from "@/lib/ml/forecast";
 import type { ForecastResult, RecurringCandidate } from "@/lib/ml/types";
 import { fetchAllPages } from "@/lib/pagination";
+import {
+  isSupabaseConfigured,
+  shouldUseDemoData,
+} from "@/lib/server-config";
 import type {
   Account,
   AppUserProfile,
@@ -69,10 +71,6 @@ const defaultBudgets = [
   { categoryName: "Transport", limitAmount: 300000 },
   { categoryName: "Akademik", limitAmount: 400000 },
 ] as const;
-
-const hasClerkKeys = Boolean(
-  process.env.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && process.env.CLERK_SECRET_KEY,
-);
 
 function toNumber(value: number | string | null | undefined) {
   if (typeof value === "number") {
@@ -729,7 +727,7 @@ async function fetchRecurringItems(client: SupabaseLikeClient, appUserId: string
 }
 
 export async function getSakuDataset(): Promise<SakuDataset> {
-  if (!hasClerkKeys) {
+  if (shouldUseDemoData()) {
     return getDemoDataset();
   }
 
@@ -738,16 +736,16 @@ export async function getSakuDataset(): Promise<SakuDataset> {
   const { userId } = await auth();
 
   if (!userId) {
-    return getDemoDataset(fallbackName);
+    throw new Error("Unauthorized");
   }
 
   const client = await getSupabaseClient();
 
   if (!client) {
-    return getDemoDataset(fallbackName);
+    throw new Error("Supabase client tidak tersedia meski konfigurasi live aktif.");
   }
 
-  try {
+  return loadLiveData(async () => {
     const appUser = await ensureAppUser(client, {
       clerkId: userId,
       email: signedInUser?.primaryEmailAddress?.emailAddress ?? null,
@@ -781,10 +779,7 @@ export async function getSakuDataset(): Promise<SakuDataset> {
       goals,
       recurringItems,
     });
-  } catch (error) {
-    console.error("Falling back to demo dataset:", error);
-    return getDemoDataset(fallbackName);
-  }
+  });
 }
 
 export async function getDashboardSummaryPayload() {

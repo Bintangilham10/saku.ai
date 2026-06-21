@@ -11,3 +11,15 @@ export function isSupabaseConfigured(environment: ServerEnvironment = process.en
 export function shouldUseDemoData(environment: ServerEnvironment = process.env) {
   return !isClerkConfigured(environment) || !isSupabaseConfigured(environment)
 }
+
+export function getConfiguredAiProvider(environment: ServerEnvironment = process.env) {
+  if (environment.OPENAI_API_KEY) {
+    return "OpenAI" as const
+  }
+
+  if (environment.ANTHROPIC_API_KEY) {
+    return "Anthropic" as const
+  }
+
+  return null
+}

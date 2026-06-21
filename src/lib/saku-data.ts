@@ -13,6 +13,11 @@ import {
   isDateWithinBudgetRange,
   resolveBudgetDateRange,
 } from "@/lib/budget-period";
+import {
+  summarizeDetectedRecurring,
+  summarizeGoal,
+  summarizeManualRecurring,
+} from "@/lib/ai-redaction";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { loadLiveData } from "@/lib/live-data";
 import {
@@ -315,24 +320,12 @@ function buildAiSummary(
     .map((item) => `${item.name} (Rp ${item.amount.toLocaleString("id-ID")})`)
     .join(", ");
 
-  const recurring = recurringItems
-    .slice(0, 3)
-    .map((item) => `${item.label} Rp ${item.amount.toLocaleString("id-ID")}`)
-    .join(", ");
+  const recurring = summarizeManualRecurring(recurringItems);
 
   const activeGoal = goals[0];
   const warningBudget = budgets.find((budget) => budget.progress >= 0.9);
 
-  const detectedLine =
-    detectedRecurring.length > 0
-      ? detectedRecurring
-          .slice(0, 3)
-          .map(
-            (item) =>
-              `${item.merchantSample} Rp ${item.amount.toLocaleString("id-ID")} (${item.cadence}, jatuh tempo ${item.nextOccurrence})`,
-          )
-          .join(", ")
-      : "Belum ada pola recurring terdeteksi";
+  const detectedLine = summarizeDetectedRecurring(detectedRecurring);
 
   const forecastLine = `Proyeksi saldo akhir bulan (${forecast.horizonDate}, ${forecast.daysRemaining} hari lagi, mode ${forecast.mode}): Rp ${forecast.predictedBalance.toLocaleString("id-ID")} (rentang Rp ${forecast.lower.toLocaleString("id-ID")} - Rp ${forecast.upper.toLocaleString("id-ID")})`;
 
@@ -344,9 +337,7 @@ function buildAiSummary(
     `Langganan Rutin (manual): ${recurring || "Belum ada recurring rule"}`,
     `Recurring terdeteksi otomatis: ${detectedLine}`,
     forecastLine,
-    activeGoal
-      ? `Target Tabungan: ${activeGoal.name} Rp ${activeGoal.targetAmount.toLocaleString("id-ID")} (Saat ini Rp ${activeGoal.currentAmount.toLocaleString("id-ID")})`
-      : "Target Tabungan: Belum ada target aktif",
+    `Target Tabungan: ${summarizeGoal(activeGoal)}`,
     warningBudget
       ? `Alert Budget: ${warningBudget.categoryName} sudah ${Math.round(warningBudget.progress * 100)}% dari limit.`
       : "Alert Budget: Tidak ada budget kritis saat ini.",

@@ -1,10 +1,4 @@
-type ServerEnvironment = Pick<
-  NodeJS.ProcessEnv,
-  | "NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY"
-  | "CLERK_SECRET_KEY"
-  | "NEXT_PUBLIC_SUPABASE_URL"
-  | "NEXT_PUBLIC_SUPABASE_ANON_KEY"
->
+type ServerEnvironment = Readonly<Record<string, string | undefined>>
 
 export function isClerkConfigured(environment: ServerEnvironment = process.env) {
   return Boolean(environment.NEXT_PUBLIC_CLERK_PUBLISHABLE_KEY && environment.CLERK_SECRET_KEY)

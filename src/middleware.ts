@@ -11,6 +11,7 @@ const isProtectedRoute = createRouteMatcher([
   "/api/dashboard(.*)",
   "/api/transactions(.*)",
   "/api/chat(.*)",
+  "/api/ai(.*)",
 ]);
 
 const middleware = isClerkConfigured()

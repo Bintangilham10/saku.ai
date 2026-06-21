@@ -10,6 +10,7 @@ const ACCOUNT_A = "10000000-0000-4000-8000-000000000001"
 const ACCOUNT_B = "10000000-0000-4000-8000-000000000002"
 const CATEGORY_A = "20000000-0000-4000-8000-000000000001"
 const CATEGORY_B = "20000000-0000-4000-8000-000000000002"
+const AUDITED_TRANSACTION = "30000000-0000-4000-8000-000000000001"
 
 async function readMigration(name) {
   const sql = await readFile(new URL(`../supabase/migrations/${name}`, import.meta.url), "utf8")
@@ -32,6 +33,13 @@ async function expectConstraint(db, sql, code, constraint) {
   await assert.rejects(db.exec(sql), (error) => {
     assert.equal(error.code, code)
     assert.equal(error.constraint, constraint)
+    return true
+  })
+}
+
+async function expectSqlState(db, sql, code) {
+  await assert.rejects(db.exec(sql), (error) => {
+    assert.equal(error.code, code)
     return true
   })
 }
@@ -75,6 +83,8 @@ async function createDatabase() {
     GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO authenticated;
     GRANT EXECUTE ON ALL FUNCTIONS IN SCHEMA public, auth TO authenticated;
   `)
+
+  await db.exec(await readMigration("004_immutable_audit_logs.sql"))
 
   return db
 }
@@ -243,6 +253,78 @@ test("RLS and composite foreign keys isolate two Clerk identities", async (t) =>
         "23514",
         "budgets_date_order"
       )
+    })
+
+    await t.test("audit logs are trigger-written, private, and immutable", async () => {
+      await db.exec(`
+        INSERT INTO public.transactions (
+          id, user_id, account_id, category_id, amount, type, date
+        ) VALUES (
+          '${AUDITED_TRANSACTION}', '${USER_A}', '${ACCOUNT_A}', '${CATEGORY_A}',
+          75000, 'debit', CURRENT_DATE
+        );
+      `)
+
+      const ownAudit = await db.query(`
+        SELECT table_name, row_id, action, payload
+        FROM public.audit_logs
+        WHERE row_id = '${AUDITED_TRANSACTION}'
+      `)
+
+      assert.deepEqual(ownAudit.rows, [
+        {
+          table_name: "transactions",
+          row_id: AUDITED_TRANSACTION,
+          action: "INSERT",
+          payload: { source: "database_trigger" },
+        },
+      ])
+
+      await expectSqlState(
+        db,
+        `INSERT INTO public.audit_logs (user_id, table_name, action)
+         VALUES ('${USER_A}', 'transactions', 'FORGED');`,
+        "42501"
+      )
+      await expectSqlState(
+        db,
+        `UPDATE public.audit_logs SET action = 'FORGED'
+         WHERE row_id = '${AUDITED_TRANSACTION}';`,
+        "42501"
+      )
+      await expectSqlState(
+        db,
+        `DELETE FROM public.audit_logs WHERE row_id = '${AUDITED_TRANSACTION}';`,
+        "42501"
+      )
+
+      await setIdentity(db, "clerk_user_b")
+      const otherUserAudit = await db.query(`
+        SELECT id FROM public.audit_logs WHERE row_id = '${AUDITED_TRANSACTION}'
+      `)
+      assert.deepEqual(otherUserAudit.rows, [])
+
+      await db.exec("RESET ROLE;")
+      const functionSecurity = await db.query(`
+        SELECT
+          prosecdef,
+          proconfig,
+          has_function_privilege(
+            'authenticated',
+            'public.write_immutable_audit_log()',
+            'EXECUTE'
+          ) AS authenticated_can_execute
+        FROM pg_proc
+        WHERE oid = 'public.write_immutable_audit_log()'::regprocedure
+      `)
+
+      assert.equal(functionSecurity.rows[0].prosecdef, true)
+      assert.equal(functionSecurity.rows[0].authenticated_can_execute, false)
+      assert.ok(
+        functionSecurity.rows[0].proconfig.includes("search_path=pg_catalog, public")
+      )
+
+      await setIdentity(db, "clerk_user_a")
     })
   } finally {
     await db.exec("RESET ROLE;")

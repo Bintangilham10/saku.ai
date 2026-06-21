@@ -86,6 +86,7 @@ async function createDatabase() {
 
   await db.exec(await readMigration("004_immutable_audit_logs.sql"))
   await db.exec(await readMigration("005_ai_access_controls.sql"))
+  await db.exec(await readMigration("006_fix_ai_rate_limit_timestamp.sql"))
 
   return db
 }

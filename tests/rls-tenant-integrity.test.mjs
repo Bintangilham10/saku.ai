@@ -85,6 +85,7 @@ async function createDatabase() {
   `)
 
   await db.exec(await readMigration("004_immutable_audit_logs.sql"))
+  await db.exec(await readMigration("005_ai_access_controls.sql"))
 
   return db
 }
@@ -323,6 +324,50 @@ test("RLS and composite foreign keys isolate two Clerk identities", async (t) =>
       assert.ok(
         functionSecurity.rows[0].proconfig.includes("search_path=pg_catalog, public")
       )
+
+      await setIdentity(db, "clerk_user_a")
+    })
+
+    await t.test("AI consent and rate limits are isolated per identity", async () => {
+      const consentResult = await db.query(
+        "SELECT public.set_ai_consent(true) AS updated"
+      )
+      assert.equal(consentResult.rows[0].updated, true)
+
+      const settingsResult = await db.query(`
+        SELECT settings ->> 'aiConsent' AS consent
+        FROM public.app_users
+        WHERE id = '${USER_A}'
+      `)
+      assert.equal(settingsResult.rows[0].consent, "true")
+
+      for (let request = 1; request <= 10; request += 1) {
+        const rateLimit = await db.query(
+          "SELECT * FROM public.consume_ai_rate_limit(10, 60)"
+        )
+        assert.equal(rateLimit.rows[0].allowed, true)
+      }
+
+      const blocked = await db.query(
+        "SELECT * FROM public.consume_ai_rate_limit(10, 60)"
+      )
+      assert.equal(blocked.rows[0].allowed, false)
+      assert.ok(blocked.rows[0].retry_after_seconds > 0)
+
+      await expectSqlState(db, "SELECT * FROM public.ai_rate_limits;", "42501")
+
+      await setIdentity(db, "clerk_user_b")
+      const independentLimit = await db.query(
+        "SELECT * FROM public.consume_ai_rate_limit(10, 60)"
+      )
+      assert.equal(independentLimit.rows[0].allowed, true)
+
+      const userBSettings = await db.query(`
+        SELECT settings ->> 'aiConsent' AS consent
+        FROM public.app_users
+        WHERE id = '${USER_B}'
+      `)
+      assert.equal(userBSettings.rows[0].consent, null)
 
       await setIdentity(db, "clerk_user_a")
     })

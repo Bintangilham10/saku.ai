@@ -3,6 +3,13 @@ import { openai } from "@ai-sdk/openai"
 import { auth } from "@clerk/nextjs/server"
 import { streamText } from "ai"
 
+import { consumeAiRateLimit, hasAiConsent } from "@/lib/ai-access"
+import {
+  AI_MAX_OUTPUT_TOKENS,
+  AI_REQUEST_TIMEOUT_MS,
+  ChatRequestError,
+  parseChatRequest,
+} from "@/lib/ai-security"
 import { getSakuDataset } from "@/lib/saku-data"
 import { isClerkConfigured, isSupabaseConfigured } from "@/lib/server-config"
 
@@ -44,10 +51,33 @@ export async function POST(req: Request) {
   }
 
   try {
-    const { messages } = await req.json()
+    const { messages } = await parseChatRequest(req)
+    const consentGranted = await hasAiConsent(userId)
+
+    if (!consentGranted) {
+      return Response.json(
+        { error: "Persetujuan AI diperlukan sebelum data dikirim ke provider." },
+        { status: 403 }
+      )
+    }
+
+    const rateLimit = await consumeAiRateLimit()
+
+    if (!rateLimit.allowed) {
+      return Response.json(
+        { error: "Batas chat AI tercapai. Coba lagi sebentar." },
+        {
+          status: 429,
+          headers: { "Retry-After": String(rateLimit.retryAfterSeconds) },
+        }
+      )
+    }
+
     const dataset = await getSakuDataset()
 
     const result = streamText({
+      abortSignal: AbortSignal.timeout(AI_REQUEST_TIMEOUT_MS),
+      maxTokens: AI_MAX_OUTPUT_TOKENS,
       model,
       system: [
         "Kamu adalah Saku AI, asisten keuangan mahasiswa.",
@@ -58,12 +88,16 @@ export async function POST(req: Request) {
         "Gunakan konteks ringkasan keuangan berikut sebagai dasar jawaban:",
         dataset.aiSummary,
       ].join("\n\n"),
-      messages: Array.isArray(messages) ? messages : [],
+      messages,
       temperature: 0.5,
     })
 
     return result.toDataStreamResponse()
   } catch (error) {
+    if (error instanceof ChatRequestError) {
+      return Response.json({ error: error.message }, { status: error.status })
+    }
+
     console.error("Chat API error:", error)
     return Response.json(
       {

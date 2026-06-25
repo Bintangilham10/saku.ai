@@ -51,10 +51,12 @@ export function QuickAddTransaction({
     setStatus(null);
 
     try {
+      const idempotencyKey = crypto.randomUUID();
       const response = await fetch("/api/transactions", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
+          "Idempotency-Key": idempotencyKey,
         },
         body: JSON.stringify({
           type,

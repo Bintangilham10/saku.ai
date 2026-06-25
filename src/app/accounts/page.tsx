@@ -1,25 +1,25 @@
 import { Landmark, Wallet } from "lucide-react"
+import { parseISO } from "date-fns"
 
 import { SakuShell } from "@/components/saku-shell"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCurrency, formatShortDate } from "@/lib/format"
+import { formatShortDate } from "@/lib/format"
+import { formatMinor, sumMinor } from "@/lib/money"
 import { getSakuDataset } from "@/lib/saku-data"
+import type { Transaction } from "@/lib/saku-types"
+
+function signedAmountMinor(transaction: Transaction) {
+  const amountMinor = BigInt(transaction.amount_minor)
+  return transaction.type === "credit" ? amountMinor : -amountMinor
+}
+
+function isSettledTransaction(transaction: Transaction, now = new Date()) {
+  return transaction.status !== "pending" && parseISO(transaction.date) <= now
+}
 
 export default async function AccountsPage() {
   const dataset = await getSakuDataset()
-  const balanceByAccount = new Map<string, number>()
-
-  dataset.transactions.forEach((transaction) => {
-    if (!transaction.accountId) {
-      return
-    }
-
-    const current = balanceByAccount.get(transaction.accountId) ?? 0
-    balanceByAccount.set(
-      transaction.accountId,
-      current + (transaction.type === "credit" ? transaction.amount : -transaction.amount)
-    )
-  })
+  const now = new Date()
 
   return (
     <SakuShell
@@ -33,6 +33,12 @@ export default async function AccountsPage() {
           const transactions = dataset.transactions.filter(
             (transaction) => transaction.accountId === account.id
           )
+          const settledTransactions = transactions.filter((transaction) =>
+            isSettledTransaction(transaction, now)
+          )
+          const availableMinor = sumMinor(settledTransactions.map(signedAmountMinor))
+          const projectedMinor = sumMinor(transactions.map(signedAmountMinor))
+          const pendingCount = transactions.length - settledTransactions.length
           const lastUsed = transactions[0]?.date ?? null
           const icon = account.type === "bank" || account.type === "tabungan" ? Landmark : Wallet
           const Icon = icon
@@ -55,10 +61,16 @@ export default async function AccountsPage() {
               </CardHeader>
               <CardContent className="space-y-3">
                 <div>
-                  <p className="text-muted-foreground text-sm">Saldo</p>
                   <p className="text-xl font-semibold tabular-nums">
-                    {formatCurrency(balanceByAccount.get(account.id) ?? 0)}
+                    {formatMinor(availableMinor, account.currency)}
                   </p>
+                  <p className="text-muted-foreground text-sm">Tersedia</p>
+                  {pendingCount > 0 ? (
+                    <p className="text-muted-foreground mt-1 text-sm">
+                      +{pendingCount} pending/terjadwal - Proyeksi:{" "}
+                      {formatMinor(projectedMinor, account.currency)}
+                    </p>
+                  ) : null}
                 </div>
                 <div className="grid grid-cols-2 gap-3 text-sm">
                   <div className="border-border/60 bg-background/50 rounded-md border p-3">

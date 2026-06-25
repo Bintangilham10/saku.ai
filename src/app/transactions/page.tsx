@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { MessageSquareText } from "lucide-react"
 
 import { QuickAddTransaction } from "@/components/quick-add-transaction"
@@ -6,12 +7,38 @@ import { SakuShell } from "@/components/saku-shell"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatCurrency, formatShortDate } from "@/lib/format"
+import { formatShortDate } from "@/lib/format"
+import { formatMinor } from "@/lib/money"
 import { getSakuDataset } from "@/lib/saku-data"
+import type { MoneyTotal } from "@/lib/saku-types"
+
+function MoneyTotalLines({ totals }: { totals: MoneyTotal[] }) {
+  if (!totals.length) {
+    return <span>{formatMinor(BigInt(0))}</span>
+  }
+
+  return (
+    <span className="space-y-1">
+      {totals.map((item) => (
+        <span key={item.currency} className="block">
+          {item.formatted}
+        </span>
+      ))}
+    </span>
+  )
+}
 
 export default async function TransactionsPage() {
   const dataset = await getSakuDataset()
   const visibleTransactions = dataset.transactions.slice(0, 100)
+  const summaryItems: Array<{ label: string; value: ReactNode }> = [
+    { label: "Total", value: `${dataset.transactions.length} transaksi` },
+    { label: "Masuk", value: <MoneyTotalLines totals={dataset.summary.monthlyIncomeByCurrency} /> },
+    {
+      label: "Keluar",
+      value: <MoneyTotalLines totals={dataset.summary.monthlyExpensesByCurrency} />,
+    },
+  ]
 
   return (
     <SakuShell
@@ -40,11 +67,7 @@ export default async function TransactionsPage() {
             <CardTitle>Ringkasan</CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-3 xl:grid-cols-1">
-            {[
-              { label: "Total", value: `${dataset.transactions.length} transaksi` },
-              { label: "Masuk", value: formatCurrency(dataset.summary.monthlyIncome) },
-              { label: "Keluar", value: formatCurrency(dataset.summary.monthlyExpenses) },
-            ].map((item) => (
+            {summaryItems.map((item) => (
               <div
                 key={item.label}
                 className="border-border/60 bg-background/50 rounded-md border p-3"
@@ -87,7 +110,7 @@ export default async function TransactionsPage() {
                   }
                 >
                   {transaction.type === "credit" ? "+" : "-"}
-                  {formatCurrency(transaction.amount)}
+                  {formatMinor(BigInt(transaction.amount_minor), transaction.currency)}
                 </p>
                 <p className="text-muted-foreground text-sm">{transaction.status}</p>
               </div>

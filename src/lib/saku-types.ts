@@ -140,6 +140,7 @@ export type TransactionInput = {
   accountId: string | null;
   amount: number;
   currency?: string;
+  externalId?: string | null;
   type: TransactionType;
   categoryId: string | null;
   merchant: string | null;

@@ -18,9 +18,15 @@ import {
   summarizeGoal,
   summarizeManualRecurring,
 } from "@/lib/ai-redaction";
+import {
+  buildBalanceSummary,
+  findCurrencyTotal,
+  getMoneyTotalMinor,
+  sumByCurrency,
+} from "@/lib/balance-summary";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { loadLiveData } from "@/lib/live-data";
-import { formatMinor, fromMinor, toMinor } from "@/lib/money";
+import { fromMinor, toMinor } from "@/lib/money";
 import {
   demoAccounts,
   demoBudgets,
@@ -117,47 +123,10 @@ function resolveAmountMinor(params: {
   return toMinor(toNumber(params.amount)).toString();
 }
 
-function signedAmountMinor(transaction: Transaction) {
-  const amountMinor = BigInt(transaction.amount_minor);
-  return transaction.type === "credit" ? amountMinor : -amountMinor;
-}
-
-function sumByCurrency(
-  transactions: Transaction[],
-  getAmountMinor: (transaction: Transaction) => bigint,
-): MoneyTotal[] {
-  const totals = new Map<string, bigint>();
-
-  for (const transaction of transactions) {
-    const currency = transaction.currency ?? "IDR";
-    totals.set(
-      currency,
-      (totals.get(currency) ?? BigInt(0)) + getAmountMinor(transaction),
-    );
-  }
-
-  return [...totals.entries()]
-    .map(([currency, amountMinor]) => ({
-      currency,
-      total: fromMinor(amountMinor),
-      amountMinor: amountMinor.toString(),
-      formatted: formatMinor(amountMinor, currency),
-    }))
-    .sort((left, right) => left.currency.localeCompare(right.currency));
-}
-
-function findCurrencyTotal(totals: MoneyTotal[], currency = "IDR") {
-  return totals.find((item) => item.currency === currency)?.total ?? 0;
-}
-
 function formatMoneyTotals(totals: MoneyTotal[]) {
   return totals.length
     ? totals.map((item) => item.formatted).join(", ")
     : "Belum ada";
-}
-
-function isSettledTransaction(transaction: Transaction, now = new Date()) {
-  return transaction.status !== "pending" && parseISO(transaction.date) <= now;
 }
 
 function clamp(value: number, min = 0, max = 1) {
@@ -385,9 +354,6 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
     const date = parseISO(transaction.date);
     return date >= start && date <= end;
   });
-  const settledTransactions = transactions.filter((transaction) =>
-    isSettledTransaction(transaction, now),
-  );
 
   const currentMonthCredits = currentMonthTransactions.filter(
     (transaction) => transaction.type === "credit",
@@ -402,22 +368,22 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
     BigInt(transaction.amount_minor),
   );
 
-  const availableBalances = sumByCurrency(settledTransactions, signedAmountMinor);
-  const projectedBalances = sumByCurrency(transactions, signedAmountMinor);
+  const {
+    availableBalance,
+    projectedBalance,
+    pendingCount,
+    availableBalances,
+    projectedBalances,
+  } = buildBalanceSummary(transactions, now);
 
   const monthlyIncome = findCurrencyTotal(monthlyIncomeByCurrency);
   const monthlyExpenses = findCurrencyTotal(monthlyExpensesByCurrency);
-  const availableBalance = findCurrencyTotal(availableBalances);
-  const projectedBalance = findCurrencyTotal(projectedBalances);
-  const pendingCount = transactions.length - settledTransactions.length;
 
   const monthlyIncomeMinor = BigInt(
-    monthlyIncomeByCurrency.find((item) => item.currency === "IDR")?.amountMinor ??
-      "0",
+    getMoneyTotalMinor(monthlyIncomeByCurrency, "IDR"),
   );
   const monthlyExpensesMinor = BigInt(
-    monthlyExpensesByCurrency.find((item) => item.currency === "IDR")?.amountMinor ??
-      "0",
+    getMoneyTotalMinor(monthlyExpensesByCurrency, "IDR"),
   );
   const savingsMinor = monthlyIncomeMinor - monthlyExpensesMinor;
   const savingsRate =

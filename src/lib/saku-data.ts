@@ -90,6 +90,27 @@ function toNumber(value: number | string | null | undefined) {
   return 0;
 }
 
+const MINOR_UNITS_FACTOR = 100;
+
+function toMinorUnits(amount: number) {
+  return Math.round(amount * MINOR_UNITS_FACTOR);
+}
+
+function fromMinorUnits(value: number | string | null | undefined) {
+  if (value === null || value === undefined) {
+    return null;
+  }
+
+  return toNumber(value) / MINOR_UNITS_FACTOR;
+}
+
+function resolveAmount(params: {
+  amount: number | string | null | undefined;
+  amountMinor?: number | string | null;
+}) {
+  return fromMinorUnits(params.amountMinor) ?? toNumber(params.amount);
+}
+
 function clamp(value: number, min = 0, max = 1) {
   return Math.max(min, Math.min(max, value));
 }
@@ -605,7 +626,7 @@ async function fetchTransactions(client: SupabaseLikeClient, appUserId: string) 
     const result = await client
       .from("transactions")
       .select(
-        "id, user_id, account_id, amount, currency, type, category_id, merchant, description, date, status, imported, tags, created_at",
+        "id, user_id, account_id, amount, amount_minor, currency, type, category_id, merchant, description, date, status, imported, tags, created_at",
       )
       .eq("user_id", appUserId)
       .order("date", { ascending: false })
@@ -624,7 +645,10 @@ async function fetchTransactions(client: SupabaseLikeClient, appUserId: string) 
     id: transaction.id,
     userId: transaction.user_id,
     accountId: transaction.account_id,
-    amount: toNumber(transaction.amount),
+    amount: resolveAmount({
+      amount: transaction.amount,
+      amountMinor: transaction.amount_minor,
+    }),
     currency: transaction.currency ?? "IDR",
     type: transaction.type as Transaction["type"],
     categoryId: transaction.category_id,
@@ -899,6 +923,7 @@ export async function createTransaction(input: TransactionInput) {
       user_id: appUser.id,
       account_id: accountId,
       amount: input.amount,
+      amount_minor: toMinorUnits(input.amount),
       currency: input.currency ?? "IDR",
       type: input.type,
       category_id: categoryId,
@@ -911,7 +936,7 @@ export async function createTransaction(input: TransactionInput) {
       metadata: {},
     })
     .select(
-      "id, user_id, account_id, amount, currency, type, category_id, merchant, description, date, status, imported, tags",
+      "id, user_id, account_id, amount, amount_minor, currency, type, category_id, merchant, description, date, status, imported, tags",
     )
     .single();
 
@@ -923,7 +948,10 @@ export async function createTransaction(input: TransactionInput) {
     id: inserted.data.id,
     userId: inserted.data.user_id,
     accountId: inserted.data.account_id,
-    amount: toNumber(inserted.data.amount),
+    amount: resolveAmount({
+      amount: inserted.data.amount,
+      amountMinor: inserted.data.amount_minor,
+    }),
     currency: inserted.data.currency ?? "IDR",
     type: inserted.data.type as Transaction["type"],
     categoryId: inserted.data.category_id,

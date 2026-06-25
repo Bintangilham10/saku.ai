@@ -99,17 +99,21 @@ export default function Chat({ summary, mode }: ChatProps) {
                   <Bot className="h-3.5 w-3.5" />
                   <span>Saku AI</span>
                 </div>
-                <div className="flex gap-1">
-                  <span className="bg-muted-foreground/40 h-2 w-2 animate-bounce rounded-full" />
+                {/* typing indicator dots */}
+                <span className="flex gap-1">
                   <span
-                    className="bg-muted-foreground/40 h-2 w-2 animate-bounce rounded-full"
-                    style={{ animationDelay: "0.1s" }}
+                    className="h-2 w-2 animate-bounce rounded-full bg-current"
+                    style={{ animationDelay: "0ms" }}
                   />
                   <span
-                    className="bg-muted-foreground/40 h-2 w-2 animate-bounce rounded-full"
-                    style={{ animationDelay: "0.2s" }}
+                    className="h-2 w-2 animate-bounce rounded-full bg-current"
+                    style={{ animationDelay: "150ms" }}
                   />
-                </div>
+                  <span
+                    className="h-2 w-2 animate-bounce rounded-full bg-current"
+                    style={{ animationDelay: "300ms" }}
+                  />
+                </span>
               </div>
             ) : null}
           </div>

@@ -78,6 +78,9 @@ const defaultBudgets = [
   { categoryName: "Akademik", limitAmount: 400000 },
 ] as const;
 
+const transactionSelectColumns =
+  "id, user_id, account_id, amount, amount_minor, currency, type, category_id, merchant, description, date, status, imported, tags";
+
 function toNumber(value: number | string | null | undefined) {
   if (typeof value === "number") {
     return value;
@@ -125,6 +128,46 @@ function getMonthBounds(reference = new Date()) {
   return {
     start: startOfMonth(reference),
     end: endOfMonth(reference),
+  };
+}
+
+function mapTransactionRow(transaction: {
+  id: string;
+  user_id?: string | null;
+  account_id: string | null;
+  amount: number | string | null;
+  amount_minor?: number | string | null;
+  currency?: string | null;
+  type: string;
+  category_id: string | null;
+  merchant: string | null;
+  description: string | null;
+  date: string;
+  status?: string | null;
+  imported?: boolean | null;
+  tags?: string[] | null;
+}): Transaction {
+  return {
+    id: transaction.id,
+    userId: transaction.user_id ?? undefined,
+    accountId: transaction.account_id,
+    amount: resolveAmount({
+      amount: transaction.amount,
+      amountMinor: transaction.amount_minor,
+    }),
+    amount_minor: resolveAmountMinor({
+      amount: transaction.amount,
+      amountMinor: transaction.amount_minor,
+    }),
+    currency: transaction.currency ?? "IDR",
+    type: transaction.type as Transaction["type"],
+    categoryId: transaction.category_id,
+    merchant: transaction.merchant,
+    description: transaction.description,
+    date: transaction.date,
+    status: (transaction.status ?? "cleared") as Transaction["status"],
+    imported: Boolean(transaction.imported),
+    tags: transaction.tags ?? [],
   };
 }
 
@@ -643,9 +686,7 @@ async function fetchTransactions(client: SupabaseLikeClient, appUserId: string) 
   const transactions = await fetchAllPages(async (from, to) => {
     const result = await client
       .from("transactions")
-      .select(
-        "id, user_id, account_id, amount, amount_minor, currency, type, category_id, merchant, description, date, status, imported, tags, created_at",
-      )
+      .select(`${transactionSelectColumns}, created_at`)
       .eq("user_id", appUserId)
       .order("date", { ascending: false })
       .order("created_at", { ascending: false })
@@ -659,28 +700,7 @@ async function fetchTransactions(client: SupabaseLikeClient, appUserId: string) 
     return result.data ?? [];
   });
 
-  return transactions.map<Transaction>((transaction) => ({
-    id: transaction.id,
-    userId: transaction.user_id,
-    accountId: transaction.account_id,
-    amount: resolveAmount({
-      amount: transaction.amount,
-      amountMinor: transaction.amount_minor,
-    }),
-    amount_minor: resolveAmountMinor({
-      amount: transaction.amount,
-      amountMinor: transaction.amount_minor,
-    }),
-    currency: transaction.currency ?? "IDR",
-    type: transaction.type as Transaction["type"],
-    categoryId: transaction.category_id,
-    merchant: transaction.merchant,
-    description: transaction.description,
-    date: transaction.date,
-    status: (transaction.status ?? "cleared") as Transaction["status"],
-    imported: Boolean(transaction.imported),
-    tags: transaction.tags ?? [],
-  }));
+  return transactions.map(mapTransactionRow);
 }
 
 async function fetchBudgets(client: SupabaseLikeClient, appUserId: string) {
@@ -946,6 +966,7 @@ export async function createTransaction(input: TransactionInput) {
       account_id: accountId,
       amount: input.amount,
       amount_minor: toMinor(input.amount).toString(),
+      external_id: input.externalId ?? null,
       currency: input.currency ?? "IDR",
       type: input.type,
       category_id: categoryId,
@@ -957,35 +978,31 @@ export async function createTransaction(input: TransactionInput) {
       tags: input.tags ?? [],
       metadata: {},
     })
-    .select(
-      "id, user_id, account_id, amount, amount_minor, currency, type, category_id, merchant, description, date, status, imported, tags",
-    )
+    .select(transactionSelectColumns)
     .single();
 
   if (inserted.error) {
+    if (inserted.error.code === "23505" && input.externalId) {
+      const existing = await client
+        .from("transactions")
+        .select(transactionSelectColumns)
+        .eq("user_id", appUser.id)
+        .eq("external_id", input.externalId)
+        .single();
+
+      if (!existing.error && existing.data) {
+        return {
+          created: false,
+          transaction: mapTransactionRow(existing.data),
+        };
+      }
+    }
+
     throw inserted.error;
   }
 
   return {
-    id: inserted.data.id,
-    userId: inserted.data.user_id,
-    accountId: inserted.data.account_id,
-    amount: resolveAmount({
-      amount: inserted.data.amount,
-      amountMinor: inserted.data.amount_minor,
-    }),
-    amount_minor: resolveAmountMinor({
-      amount: inserted.data.amount,
-      amountMinor: inserted.data.amount_minor,
-    }),
-    currency: inserted.data.currency ?? "IDR",
-    type: inserted.data.type as Transaction["type"],
-    categoryId: inserted.data.category_id,
-    merchant: inserted.data.merchant,
-    description: inserted.data.description,
-    date: inserted.data.date,
-    status: (inserted.data.status ?? "cleared") as Transaction["status"],
-    imported: Boolean(inserted.data.imported),
-    tags: inserted.data.tags ?? [],
-  } satisfies Transaction;
+    created: true,
+    transaction: mapTransactionRow(inserted.data),
+  };
 }

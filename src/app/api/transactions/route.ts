@@ -16,7 +16,7 @@ const transactionSchema = z.object({
   accountId: z.string().min(1).nullable().optional(),
   amount: z.coerce.number().positive(),
   categoryId: z.string().min(1).nullable().optional(),
-  currency: z.string().length(3).optional(),
+  currency: z.enum(["IDR", "USD", "EUR", "SGD"]).default("IDR"),
   date: z.string().min(1),
   description: z.string().nullable().optional(),
   imported: z.boolean().optional(),

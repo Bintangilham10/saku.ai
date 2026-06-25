@@ -61,13 +61,16 @@ export async function POST(request: Request) {
 
     const body = await request.json()
     const parsed = transactionSchema.parse(body)
-    const transaction = await createTransaction({
+    const rawIdempotencyKey = request.headers.get("Idempotency-Key")?.trim()
+    const idempotencyKey = rawIdempotencyKey || null
+    const result = await createTransaction({
       accountId: parsed.accountId ?? null,
       amount: parsed.amount,
       categoryId: parsed.categoryId ?? null,
       currency: parsed.currency,
       date: parsed.date,
       description: parsed.description ?? null,
+      externalId: idempotencyKey,
       imported: parsed.imported,
       merchant: parsed.merchant ?? null,
       status: parsed.status,
@@ -75,25 +78,36 @@ export async function POST(request: Request) {
       type: parsed.type,
     })
 
-    return NextResponse.json({ data: transaction }, { status: 201 })
+    return NextResponse.json(
+      { data: result.transaction },
+      { status: result.created ? 201 : 200 }
+    )
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { error: error.issues[0]?.message ?? "Payload tidak valid." },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 })
     }
 
     const message = error instanceof Error ? error.message : "Gagal menyimpan transaksi."
-    const status =
-      message === "Unauthorized"
-        ? 401
-        : message.includes("Invalid")
-          ? 400
-          : message.includes("belum dikonfigurasi")
-            ? 503
-            : 500
 
-    return NextResponse.json({ error: message }, { status })
+    if (message === "Unauthorized") {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 })
+    }
+
+    if (message.includes("Invalid")) {
+      return NextResponse.json({ error: "Payload tidak valid." }, { status: 400 })
+    }
+
+    if (message.includes("belum dikonfigurasi")) {
+      return NextResponse.json(
+        { error: "Transaction API tidak tersedia." },
+        { status: 503 }
+      )
+    }
+
+    console.error("Create transaction error:", error)
+    return NextResponse.json(
+      { error: "Failed to create transaction" },
+      { status: 500 }
+    )
   }
 }

@@ -20,6 +20,7 @@ import {
 } from "@/lib/ai-redaction";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { loadLiveData } from "@/lib/live-data";
+import { fromMinor, sumMinor, toMinor } from "@/lib/money";
 import {
   demoAccounts,
   demoBudgets,
@@ -90,25 +91,26 @@ function toNumber(value: number | string | null | undefined) {
   return 0;
 }
 
-const MINOR_UNITS_FACTOR = 100;
-
-function toMinorUnits(amount: number) {
-  return Math.round(amount * MINOR_UNITS_FACTOR);
-}
-
-function fromMinorUnits(value: number | string | null | undefined) {
-  if (value === null || value === undefined) {
-    return null;
-  }
-
-  return toNumber(value) / MINOR_UNITS_FACTOR;
-}
-
 function resolveAmount(params: {
   amount: number | string | null | undefined;
   amountMinor?: number | string | null;
 }) {
-  return fromMinorUnits(params.amountMinor) ?? toNumber(params.amount);
+  if (params.amountMinor !== null && params.amountMinor !== undefined) {
+    return fromMinor(BigInt(params.amountMinor));
+  }
+
+  return toNumber(params.amount);
+}
+
+function resolveAmountMinor(params: {
+  amount: number | string | null | undefined;
+  amountMinor?: number | string | null;
+}) {
+  if (params.amountMinor !== null && params.amountMinor !== undefined) {
+    return String(params.amountMinor);
+  }
+
+  return toMinor(toNumber(params.amount)).toString();
 }
 
 function clamp(value: number, min = 0, max = 1) {
@@ -296,19 +298,36 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
     return date >= start && date <= end;
   });
 
-  const monthlyIncome = currentMonthTransactions
-    .filter((transaction) => transaction.type === "credit")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
-  const monthlyExpenses = currentMonthTransactions
-    .filter((transaction) => transaction.type === "debit")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const monthlyIncomeMinor = sumMinor(
+    currentMonthTransactions
+      .filter((transaction) => transaction.type === "credit")
+      .map((transaction) => BigInt(transaction.amount_minor)),
+  );
+  const monthlyExpensesMinor = sumMinor(
+    currentMonthTransactions
+      .filter((transaction) => transaction.type === "debit")
+      .map((transaction) => BigInt(transaction.amount_minor)),
+  );
 
-  const totalIncome = transactions
-    .filter((transaction) => transaction.type === "credit")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
-  const totalExpenses = transactions
-    .filter((transaction) => transaction.type === "debit")
-    .reduce((sum, transaction) => sum + transaction.amount, 0);
+  const totalIncomeMinor = sumMinor(
+    transactions
+      .filter((transaction) => transaction.type === "credit")
+      .map((transaction) => BigInt(transaction.amount_minor)),
+  );
+  const totalExpensesMinor = sumMinor(
+    transactions
+      .filter((transaction) => transaction.type === "debit")
+      .map((transaction) => BigInt(transaction.amount_minor)),
+  );
+
+  const monthlyIncome = fromMinor(monthlyIncomeMinor);
+  const monthlyExpenses = fromMinor(monthlyExpensesMinor);
+
+  const savingsMinor = monthlyIncomeMinor - monthlyExpensesMinor;
+  const savingsRate =
+    monthlyIncomeMinor > BigInt(0)
+      ? clamp(Number(savingsMinor) / Number(monthlyIncomeMinor))
+      : 0;
 
   const totalBudget = budgets.reduce((sum, budget) => sum + budget.limitAmount, 0);
   const totalBudgetSpent = budgets.reduce(
@@ -317,11 +336,10 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
   );
 
   return {
-    balance: totalIncome - totalExpenses,
+    balance: fromMinor(totalIncomeMinor - totalExpensesMinor),
     monthlyIncome,
     monthlyExpenses,
-    savingsRate:
-      monthlyIncome > 0 ? clamp((monthlyIncome - monthlyExpenses) / monthlyIncome) : 0,
+    savingsRate,
     budgetUsage: totalBudget > 0 ? clamp(totalBudgetSpent / totalBudget, 0, 2) : 0,
     transactionCount: currentMonthTransactions.length,
   };
@@ -649,6 +667,10 @@ async function fetchTransactions(client: SupabaseLikeClient, appUserId: string) 
       amount: transaction.amount,
       amountMinor: transaction.amount_minor,
     }),
+    amount_minor: resolveAmountMinor({
+      amount: transaction.amount,
+      amountMinor: transaction.amount_minor,
+    }),
     currency: transaction.currency ?? "IDR",
     type: transaction.type as Transaction["type"],
     categoryId: transaction.category_id,
@@ -923,7 +945,7 @@ export async function createTransaction(input: TransactionInput) {
       user_id: appUser.id,
       account_id: accountId,
       amount: input.amount,
-      amount_minor: toMinorUnits(input.amount),
+      amount_minor: toMinor(input.amount).toString(),
       currency: input.currency ?? "IDR",
       type: input.type,
       category_id: categoryId,
@@ -949,6 +971,10 @@ export async function createTransaction(input: TransactionInput) {
     userId: inserted.data.user_id,
     accountId: inserted.data.account_id,
     amount: resolveAmount({
+      amount: inserted.data.amount,
+      amountMinor: inserted.data.amount_minor,
+    }),
+    amount_minor: resolveAmountMinor({
       amount: inserted.data.amount,
       amountMinor: inserted.data.amount_minor,
     }),

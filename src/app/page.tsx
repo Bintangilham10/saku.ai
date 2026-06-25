@@ -1,4 +1,5 @@
 import Link from "next/link"
+import type { ReactNode } from "react"
 import { auth } from "@clerk/nextjs/server"
 import { SignInButton } from "@clerk/nextjs"
 import { ArrowRight, Bot, PiggyBank, ReceiptText } from "lucide-react"
@@ -11,18 +12,42 @@ import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Progress } from "@/components/ui/progress"
-import { formatCurrency, formatPercent, formatShortDate } from "@/lib/format"
+import { formatPercent, formatShortDate } from "@/lib/format"
+import { formatMinor } from "@/lib/money"
 import { getSakuDataset } from "@/lib/saku-data"
 import { isClerkConfigured } from "@/lib/server-config"
+import type { MoneyTotal } from "@/lib/saku-types"
 
-function SummaryCard({ label, value, hint }: { label: string; value: string; hint: string }) {
+function MoneyTotalLines({ totals }: { totals: MoneyTotal[] }) {
+  if (!totals.length) {
+    return <span>{formatMinor(BigInt(0))}</span>
+  }
+
+  return (
+    <span className="space-y-1">
+      {totals.map((item) => (
+        <span key={item.currency} className="block">
+          {item.formatted}
+        </span>
+      ))}
+    </span>
+  )
+}
+
+function formatMoneyTotalsInline(totals: MoneyTotal[]) {
+  return totals.length ? totals.map((item) => item.formatted).join(", ") : formatMinor(BigInt(0))
+}
+
+function SummaryCard({ label, value, hint }: { label: string; value: ReactNode; hint: string }) {
   return (
     <Card className="border-border/60 bg-card/80">
       <CardHeader className="gap-2 pb-0">
         <CardDescription className="text-xs font-medium tracking-[0.08em] uppercase">
           {label}
         </CardDescription>
-        <CardTitle className="text-2xl font-semibold tabular-nums">{value}</CardTitle>
+        <CardTitle className="text-2xl leading-tight font-semibold tabular-nums">
+          {value}
+        </CardTitle>
         <p className="text-muted-foreground truncate text-xs">{hint}</p>
       </CardHeader>
     </Card>
@@ -171,22 +196,26 @@ export default async function Home() {
     >
       <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5">
         <SummaryCard
-          hint={dataset.periodLabel}
-          label="Saldo"
-          value={formatCurrency(dataset.summary.balance)}
+          hint={
+            dataset.summary.pendingCount > 0
+              ? `+${dataset.summary.pendingCount} pending/terjadwal - Proyeksi: ${formatMoneyTotalsInline(dataset.summary.projectedBalances)}`
+              : dataset.periodLabel
+          }
+          label="Saldo Tersedia"
+          value={<MoneyTotalLines totals={dataset.summary.availableBalances} />}
         />
         <SummaryCard
           hint={`${dataset.summary.transactionCount} transaksi`}
           label="Masuk"
-          value={formatCurrency(dataset.summary.monthlyIncome)}
+          value={<MoneyTotalLines totals={dataset.summary.monthlyIncomeByCurrency} />}
         />
         <SummaryCard
           hint="Bulan ini"
           label="Keluar"
-          value={formatCurrency(dataset.summary.monthlyExpenses)}
+          value={<MoneyTotalLines totals={dataset.summary.monthlyExpensesByCurrency} />}
         />
         <SummaryCard
-          hint="Sisa dana"
+          hint="IDR bulan ini"
           label="Savings"
           value={formatPercent(dataset.summary.savingsRate)}
         />
@@ -257,7 +286,7 @@ export default async function Home() {
                   }
                 >
                   {transaction.type === "credit" ? "+" : "-"}
-                  {formatCurrency(transaction.amount)}
+                  {formatMinor(BigInt(transaction.amount_minor), transaction.currency)}
                 </p>
               </div>
             ))}

@@ -20,7 +20,7 @@ import {
 } from "@/lib/ai-redaction";
 import { createSupabaseServerClient } from "@/lib/supabase";
 import { loadLiveData } from "@/lib/live-data";
-import { fromMinor, sumMinor, toMinor } from "@/lib/money";
+import { formatMinor, fromMinor, toMinor } from "@/lib/money";
 import {
   demoAccounts,
   demoBudgets,
@@ -45,6 +45,7 @@ import type {
   Category,
   CategoryBreakdown,
   Goal,
+  MoneyTotal,
   MonthlyTrend,
   RecurringItem,
   SakuDataset,
@@ -119,6 +120,40 @@ function resolveAmountMinor(params: {
 function signedAmountMinor(transaction: Transaction) {
   const amountMinor = BigInt(transaction.amount_minor);
   return transaction.type === "credit" ? amountMinor : -amountMinor;
+}
+
+function sumByCurrency(
+  transactions: Transaction[],
+  getAmountMinor: (transaction: Transaction) => bigint,
+): MoneyTotal[] {
+  const totals = new Map<string, bigint>();
+
+  for (const transaction of transactions) {
+    const currency = transaction.currency ?? "IDR";
+    totals.set(
+      currency,
+      (totals.get(currency) ?? BigInt(0)) + getAmountMinor(transaction),
+    );
+  }
+
+  return [...totals.entries()]
+    .map(([currency, amountMinor]) => ({
+      currency,
+      total: fromMinor(amountMinor),
+      amountMinor: amountMinor.toString(),
+      formatted: formatMinor(amountMinor, currency),
+    }))
+    .sort((left, right) => left.currency.localeCompare(right.currency));
+}
+
+function findCurrencyTotal(totals: MoneyTotal[], currency = "IDR") {
+  return totals.find((item) => item.currency === currency)?.total ?? 0;
+}
+
+function formatMoneyTotals(totals: MoneyTotal[]) {
+  return totals.length
+    ? totals.map((item) => item.formatted).join(", ")
+    : "Belum ada";
 }
 
 function isSettledTransaction(transaction: Transaction, now = new Date()) {
@@ -354,30 +389,36 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
     isSettledTransaction(transaction, now),
   );
 
-  const monthlyIncomeMinor = sumMinor(
-    currentMonthTransactions
-      .filter((transaction) => transaction.type === "credit")
-      .map((transaction) => BigInt(transaction.amount_minor)),
+  const currentMonthCredits = currentMonthTransactions.filter(
+    (transaction) => transaction.type === "credit",
   );
-  const monthlyExpensesMinor = sumMinor(
-    currentMonthTransactions
-      .filter((transaction) => transaction.type === "debit")
-      .map((transaction) => BigInt(transaction.amount_minor)),
+  const currentMonthDebits = currentMonthTransactions.filter(
+    (transaction) => transaction.type === "debit",
   );
-
-  const availableBalanceMinor = sumMinor(
-    settledTransactions.map(signedAmountMinor),
+  const monthlyIncomeByCurrency = sumByCurrency(currentMonthCredits, (transaction) =>
+    BigInt(transaction.amount_minor),
   );
-  const projectedBalanceMinor = sumMinor(
-    transactions.map(signedAmountMinor),
+  const monthlyExpensesByCurrency = sumByCurrency(currentMonthDebits, (transaction) =>
+    BigInt(transaction.amount_minor),
   );
 
-  const monthlyIncome = fromMinor(monthlyIncomeMinor);
-  const monthlyExpenses = fromMinor(monthlyExpensesMinor);
-  const availableBalance = fromMinor(availableBalanceMinor);
-  const projectedBalance = fromMinor(projectedBalanceMinor);
+  const availableBalances = sumByCurrency(settledTransactions, signedAmountMinor);
+  const projectedBalances = sumByCurrency(transactions, signedAmountMinor);
+
+  const monthlyIncome = findCurrencyTotal(monthlyIncomeByCurrency);
+  const monthlyExpenses = findCurrencyTotal(monthlyExpensesByCurrency);
+  const availableBalance = findCurrencyTotal(availableBalances);
+  const projectedBalance = findCurrencyTotal(projectedBalances);
   const pendingCount = transactions.length - settledTransactions.length;
 
+  const monthlyIncomeMinor = BigInt(
+    monthlyIncomeByCurrency.find((item) => item.currency === "IDR")?.amountMinor ??
+      "0",
+  );
+  const monthlyExpensesMinor = BigInt(
+    monthlyExpensesByCurrency.find((item) => item.currency === "IDR")?.amountMinor ??
+      "0",
+  );
   const savingsMinor = monthlyIncomeMinor - monthlyExpensesMinor;
   const savingsRate =
     monthlyIncomeMinor > BigInt(0)
@@ -395,8 +436,12 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
     availableBalance,
     projectedBalance,
     pendingCount,
+    availableBalances,
+    projectedBalances,
     monthlyIncome,
     monthlyExpenses,
+    monthlyIncomeByCurrency,
+    monthlyExpensesByCurrency,
     savingsRate,
     budgetUsage: totalBudget > 0 ? clamp(totalBudgetSpent / totalBudget, 0, 2) : 0,
     transactionCount: currentMonthTransactions.length,
@@ -428,8 +473,10 @@ function buildAiSummary(
 
   return [
     `User summary (${format(new Date(), "MMMM yyyy")}):`,
-    `Total Pemasukan/Uang Saku: Rp ${summary.monthlyIncome.toLocaleString("id-ID")}`,
-    `Total Pengeluaran Saat Ini: Rp ${summary.monthlyExpenses.toLocaleString("id-ID")}`,
+    `Saldo tersedia: ${formatMoneyTotals(summary.availableBalances)}`,
+    `Saldo proyeksi: ${formatMoneyTotals(summary.projectedBalances)}`,
+    `Total Pemasukan/Uang Saku: ${formatMoneyTotals(summary.monthlyIncomeByCurrency)}`,
+    `Total Pengeluaran Saat Ini: ${formatMoneyTotals(summary.monthlyExpensesByCurrency)}`,
     `Top 3 Pengeluaran: ${topCategories || "Belum ada pengeluaran dominan"}`,
     `Langganan Rutin (manual): ${recurring || "Belum ada recurring rule"}`,
     `Recurring terdeteksi otomatis: ${detectedLine}`,

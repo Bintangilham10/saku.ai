@@ -116,6 +116,15 @@ function resolveAmountMinor(params: {
   return toMinor(toNumber(params.amount)).toString();
 }
 
+function signedAmountMinor(transaction: Transaction) {
+  const amountMinor = BigInt(transaction.amount_minor);
+  return transaction.type === "credit" ? amountMinor : -amountMinor;
+}
+
+function isSettledTransaction(transaction: Transaction, now = new Date()) {
+  return transaction.status !== "pending" && parseISO(transaction.date) <= now;
+}
+
 function clamp(value: number, min = 0, max = 1) {
   return Math.max(min, Math.min(max, value));
 }
@@ -335,11 +344,15 @@ function buildCategoryBreakdown(transactions: Transaction[]): CategoryBreakdown[
 }
 
 function buildSummary(transactions: Transaction[], budgets: Budget[]) {
+  const now = new Date();
   const { start, end } = getMonthBounds();
   const currentMonthTransactions = transactions.filter((transaction) => {
     const date = parseISO(transaction.date);
     return date >= start && date <= end;
   });
+  const settledTransactions = transactions.filter((transaction) =>
+    isSettledTransaction(transaction, now),
+  );
 
   const monthlyIncomeMinor = sumMinor(
     currentMonthTransactions
@@ -352,19 +365,18 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
       .map((transaction) => BigInt(transaction.amount_minor)),
   );
 
-  const totalIncomeMinor = sumMinor(
-    transactions
-      .filter((transaction) => transaction.type === "credit")
-      .map((transaction) => BigInt(transaction.amount_minor)),
+  const availableBalanceMinor = sumMinor(
+    settledTransactions.map(signedAmountMinor),
   );
-  const totalExpensesMinor = sumMinor(
-    transactions
-      .filter((transaction) => transaction.type === "debit")
-      .map((transaction) => BigInt(transaction.amount_minor)),
+  const projectedBalanceMinor = sumMinor(
+    transactions.map(signedAmountMinor),
   );
 
   const monthlyIncome = fromMinor(monthlyIncomeMinor);
   const monthlyExpenses = fromMinor(monthlyExpensesMinor);
+  const availableBalance = fromMinor(availableBalanceMinor);
+  const projectedBalance = fromMinor(projectedBalanceMinor);
+  const pendingCount = transactions.length - settledTransactions.length;
 
   const savingsMinor = monthlyIncomeMinor - monthlyExpensesMinor;
   const savingsRate =
@@ -379,7 +391,10 @@ function buildSummary(transactions: Transaction[], budgets: Budget[]) {
   );
 
   return {
-    balance: fromMinor(totalIncomeMinor - totalExpensesMinor),
+    balance: availableBalance,
+    availableBalance,
+    projectedBalance,
+    pendingCount,
     monthlyIncome,
     monthlyExpenses,
     savingsRate,

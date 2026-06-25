@@ -8,6 +8,7 @@ import type {
   RecurringItem,
   Transaction,
 } from "@/lib/saku-types";
+import { toMinor } from "@/lib/money";
 
 const today = new Date();
 const currentMonthStart = startOfMonth(today);
@@ -60,7 +61,7 @@ export const demoCategories: Category[] = [
   { id: "cat-saving", name: "Tabungan", color: "#16a34a" },
 ];
 
-export const demoTransactions: Transaction[] = [
+const demoTransactionsBase: Array<Omit<Transaction, "amount_minor">> = [
   {
     id: "tx-001",
     accountId: "acct-bank",
@@ -412,6 +413,13 @@ export const demoTransactions: Transaction[] = [
     tags: ["rutin"],
   },
 ];
+
+export const demoTransactions: Transaction[] = demoTransactionsBase.map(
+  (transaction) => ({
+    ...transaction,
+    amount_minor: toMinor(transaction.amount).toString(),
+  }),
+);
 
 export const demoBudgets: Omit<
   Budget,

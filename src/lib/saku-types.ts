@@ -84,6 +84,9 @@ export type RecurringItem = {
 
 export type DashboardSummary = {
   balance: number;
+  availableBalance: number;
+  projectedBalance: number;
+  pendingCount: number;
   monthlyIncome: number;
   monthlyExpenses: number;
   savingsRate: number;

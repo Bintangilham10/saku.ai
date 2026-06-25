@@ -82,13 +82,24 @@ export type RecurringItem = {
   nextOccurrence: string | null;
 };
 
+export type MoneyTotal = {
+  currency: string;
+  total: number;
+  amountMinor: string;
+  formatted: string;
+};
+
 export type DashboardSummary = {
   balance: number;
   availableBalance: number;
   projectedBalance: number;
   pendingCount: number;
+  availableBalances: MoneyTotal[];
+  projectedBalances: MoneyTotal[];
   monthlyIncome: number;
   monthlyExpenses: number;
+  monthlyIncomeByCurrency: MoneyTotal[];
+  monthlyExpensesByCurrency: MoneyTotal[];
   savingsRate: number;
   budgetUsage: number;
   transactionCount: number;

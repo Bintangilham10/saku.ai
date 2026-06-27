@@ -6,119 +6,91 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--app-font-sans);
-  --font-mono: var(--app-font-mono);
-  --font-display: var(--app-font-display);
-  --color-sidebar-ring: var(--sidebar-ring);
-  --color-sidebar-border: var(--sidebar-border);
-  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
-  --color-sidebar-accent: var(--sidebar-accent);
-  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
-  --color-sidebar-primary: var(--sidebar-primary);
-  --color-sidebar-foreground: var(--sidebar-foreground);
-  --color-sidebar: var(--sidebar);
-  --color-chart-5: var(--chart-5);
-  --color-chart-4: var(--chart-4);
-  --color-chart-3: var(--chart-3);
-  --color-chart-2: var(--chart-2);
-  --color-chart-1: var(--chart-1);
-  --color-ring: var(--ring);
-  --color-input: var(--input);
-  --color-border: var(--border);
-  --color-destructive: var(--destructive);
-  --color-accent-foreground: var(--accent-foreground);
-  --color-accent: var(--accent);
-  --color-muted-foreground: var(--muted-foreground);
-  --color-muted: var(--muted);
-  --color-secondary-foreground: var(--secondary-foreground);
-  --color-secondary: var(--secondary);
-  --color-primary-foreground: var(--primary-foreground);
-  --color-primary: var(--primary);
-  --color-popover-foreground: var(--popover-foreground);
-  --color-popover: var(--popover);
-  --color-card-foreground: var(--card-foreground);
-  --color-card: var(--card);
-  --radius-sm: calc(var(--radius) - 4px);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-lg: var(--radius);
-  --radius-xl: calc(var(--radius) + 4px);
+  --font-sans: var(--font-saku-sans);
+  --font-mono: var(--font-saku-mono);
+  
+  /* Map Saku tokens to Tailwind utilities */
+  --color-saku-paper: var(--saku-paper);
+  --color-saku-paper-soft: var(--saku-paper-soft);
+  --color-saku-ink: var(--saku-ink);
+  --color-saku-muted: var(--saku-muted);
+  --color-saku-green: var(--saku-green);
+  --color-saku-green-soft: var(--saku-green-soft);
+  --color-saku-coin: var(--saku-coin);
+  --color-saku-orange: var(--saku-orange);
+  --color-saku-line: var(--saku-line);
+
+  /* Standard shadcn variables overridden to match Saku Pocket World */
+  --color-border: var(--saku-line);
+  --color-input: var(--saku-paper-soft);
+  --color-ring: var(--saku-green);
+  --color-primary: var(--saku-green);
+  --color-primary-foreground: #ffffff;
+  --color-secondary: var(--saku-paper-soft);
+  --color-secondary-foreground: var(--saku-ink);
+  --color-muted: var(--saku-paper-soft);
+  --color-muted-foreground: var(--saku-muted);
+  --color-card: var(--saku-paper-soft);
+  --color-card-foreground: var(--saku-ink);
+  --color-popover: var(--saku-paper-soft);
+  --color-popover-foreground: var(--saku-ink);
+  --color-accent: var(--saku-coin);
+  --color-accent-foreground: var(--saku-ink);
+  --color-destructive: #e53e3e;
+  --color-destructive-foreground: #ffffff;
+  --color-chart-1: var(--saku-green);
+  --color-chart-2: var(--saku-coin);
+  --color-chart-3: var(--saku-orange);
+  --color-chart-4: #6b7280;
+  --color-chart-5: #9333ea;
+
+  --radius-sm: 12px;
+  --radius-md: 20px;
+  --radius-lg: 32px;
+  --radius-xl: 44px;
 }
 
 :root {
-  --radius: 0.5rem;
-  --app-font-sans: "Aptos", "Segoe UI", sans-serif;
-  --app-font-mono: "Cascadia Code", "Consolas", monospace;
-  --app-font-display: "Aptos Display", "Aptos", "Segoe UI", sans-serif;
-  --background: oklch(0.988 0.003 245);
-  --foreground: oklch(0.225 0.015 255);
-  --card: oklch(1 0 0 / 92%);
-  --card-foreground: oklch(0.225 0.015 255);
-  --popover: oklch(1 0 0);
-  --popover-foreground: oklch(0.225 0.015 255);
-  --primary: oklch(0.44 0.095 166);
-  --primary-foreground: oklch(0.99 0.003 245);
-  --secondary: oklch(0.94 0.016 230);
-  --secondary-foreground: oklch(0.27 0.028 250);
-  --muted: oklch(0.958 0.005 245);
-  --muted-foreground: oklch(0.49 0.018 255);
-  --accent: oklch(0.94 0.03 84);
-  --accent-foreground: oklch(0.3 0.032 70);
-  --destructive: oklch(0.577 0.245 27.325);
-  --border: oklch(0.895 0.009 245);
-  --input: oklch(0.915 0.008 245);
-  --ring: oklch(0.58 0.095 166);
-  --chart-1: oklch(0.66 0.16 32);
-  --chart-2: oklch(0.56 0.13 172);
-  --chart-3: oklch(0.6 0.15 255);
-  --chart-4: oklch(0.72 0.14 92);
-  --chart-5: oklch(0.58 0.16 330);
-  --sidebar: oklch(0.988 0.003 245);
-  --sidebar-foreground: oklch(0.24 0.016 255);
-  --sidebar-primary: oklch(0.44 0.095 166);
-  --sidebar-primary-foreground: oklch(0.99 0.003 245);
-  --sidebar-accent: oklch(0.94 0.016 230);
-  --sidebar-accent-foreground: oklch(0.27 0.028 250);
-  --sidebar-border: oklch(0.895 0.009 245);
-  --sidebar-ring: oklch(0.58 0.095 166);
+  /* ==========================================================================
+     SAKU.AI POCKET WORLD DESIGN TOKENS
+     Warm paper background, dark chocolate ink, soft emerald & gold coins
+     ========================================================================== */
+  --saku-paper: #f6f0e6;
+  --saku-paper-soft: #fcf9f2;
+  --saku-ink: #3b2d28;
+  --saku-muted: #85756e;
+  --saku-green: #109868;
+  --saku-green-soft: #e2f5ec;
+  --saku-coin: #f59e0b;
+  --saku-orange: #e76f51;
+  --saku-line: #e3d6c6;
+  --saku-shadow-soft: 0 16px 40px -6px rgba(59, 45, 40, 0.08), 0 4px 12px -2px rgba(59, 45, 40, 0.04);
+
+  --background: var(--saku-paper);
+  --foreground: var(--saku-ink);
+  --font-saku-sans: var(--font-jakarta), "Plus Jakarta Sans", "Nunito", "Quicksand", system-ui, sans-serif;
+  --font-saku-mono: "JetBrains Mono", "Courier New", monospace;
 }
 
 .dark {
-  --background: oklch(0.19 0.018 255);
-  --foreground: oklch(0.95 0.005 240);
-  --card: oklch(0.24 0.019 255 / 94%);
-  --card-foreground: oklch(0.95 0.005 240);
-  --popover: oklch(0.22 0.019 255);
-  --popover-foreground: oklch(0.95 0.005 240);
-  --primary: oklch(0.72 0.13 172);
-  --primary-foreground: oklch(0.16 0.018 255);
-  --secondary: oklch(0.31 0.032 245);
-  --secondary-foreground: oklch(0.94 0.006 240);
-  --muted: oklch(0.29 0.018 255);
-  --muted-foreground: oklch(0.76 0.018 245);
-  --accent: oklch(0.38 0.058 85);
-  --accent-foreground: oklch(0.96 0.006 95);
-  --destructive: oklch(0.704 0.191 22.216);
-  --border: oklch(0.35 0.021 255);
-  --input: oklch(0.31 0.018 255);
-  --ring: oklch(0.72 0.13 172);
-  --chart-1: oklch(0.72 0.17 32);
-  --chart-2: oklch(0.72 0.13 172);
-  --chart-3: oklch(0.73 0.14 255);
-  --chart-4: oklch(0.78 0.13 92);
-  --chart-5: oklch(0.73 0.16 330);
-  --sidebar: oklch(0.21 0.018 255);
-  --sidebar-foreground: oklch(0.95 0.005 240);
-  --sidebar-primary: oklch(0.72 0.13 172);
-  --sidebar-primary-foreground: oklch(0.16 0.018 255);
-  --sidebar-accent: oklch(0.31 0.032 245);
-  --sidebar-accent-foreground: oklch(0.94 0.006 240);
-  --sidebar-border: oklch(0.35 0.021 255);
-  --sidebar-ring: oklch(0.72 0.13 172);
+  --saku-paper: #1c1816;
+  --saku-paper-soft: #28221f;
+  --saku-ink: #f5ede6;
+  --saku-muted: #a3958c;
+  --saku-green: #2ecc8f;
+  --saku-green-soft: #16382a;
+  --saku-coin: #fbbf24;
+  --saku-orange: #f48c6f;
+  --saku-line: #3d3430;
+  --saku-shadow-soft: 0 20px 50px -10px rgba(0, 0, 0, 0.4);
+
+  --background: var(--saku-paper);
+  --foreground: var(--saku-ink);
 }
 
 @layer base {
   * {
-    @apply border-border outline-ring/50;
+    border-color: var(--saku-line);
     box-sizing: border-box;
   }
 
@@ -127,27 +99,265 @@
   }
 
   body {
-    @apply bg-background text-foreground overflow-x-hidden font-sans;
-    background-image: linear-gradient(
-      180deg,
-      color-mix(in oklab, var(--background) 96%, white) 0%,
-      var(--background) 42%,
-      color-mix(in oklab, var(--background) 96%, var(--muted)) 100%
-    );
+    background-color: var(--saku-paper);
+    color: var(--saku-ink);
+    font-family: var(--font-saku-sans);
+    overflow-x: hidden;
+    -webkit-font-smoothing: antialiased;
+    /* Soft tactile paper dot texture */
+    background-image: radial-gradient(var(--saku-line) 1px, transparent 1px);
+    background-size: 28px 28px;
   }
 }
 
+/* ==========================================================================
+   ANIMATION KEYFRAMES (Respecting prefers-reduced-motion)
+   ========================================================================== */
+@keyframes float {
+  0%, 100% { transform: translateY(0) rotate(0deg); }
+  50% { transform: translateY(-8px) rotate(1.5deg); }
+}
+
+@keyframes receipt-slide {
+  0% { opacity: 0; transform: translateY(-30px) rotate(-8deg); }
+  100% { opacity: 1; transform: translateY(0) rotate(-2deg); }
+}
+
+@keyframes coin-wiggle {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  25% { transform: rotate(-12deg) scale(1.1); }
+  75% { transform: rotate(12deg) scale(1.1); }
+}
+
+@keyframes bubble-pop {
+  0% { opacity: 0; transform: scale(0.88) translateY(10px); }
+  70% { transform: scale(1.03) translateY(-2px); }
+  100% { opacity: 1; transform: scale(1) translateY(0); }
+}
+
+@keyframes soft-reveal {
+  0% { opacity: 0; transform: translateY(16px); }
+  100% { opacity: 1; transform: translateY(0); }
+}
+
 @layer utilities {
-  .font-display {
-    font-family: var(--app-font-display);
+  /* Handcrafted Saku Primitives */
+  .pocket-scene {
+    position: relative;
+    width: 100%;
+    background-color: var(--saku-paper-soft);
+    border: 3px solid var(--saku-line);
+    border-radius: 48px;
+    box-shadow: var(--saku-shadow-soft);
+    overflow: hidden;
   }
 
-  .no-scrollbar {
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+  .receipt-card {
+    background-color: #ffffff;
+    color: #2b211e;
+    border: 2px solid #e8dec8;
+    border-radius: 16px;
+    box-shadow: 0 8px 24px rgba(43, 33, 30, 0.08);
+    font-family: var(--font-saku-mono);
+  }
+  .dark .receipt-card {
+    background-color: #28221f;
+    color: #f5ede6;
+    border-color: #3d3430;
   }
 
-  .no-scrollbar::-webkit-scrollbar {
-    display: none;
+  .coin-bubble {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background-color: var(--saku-paper-soft);
+    border: 2px solid var(--saku-coin);
+    color: var(--saku-ink);
+    padding: 8px 16px;
+    border-radius: 9999px;
+    font-weight: 800;
+    box-shadow: 0 4px 12px rgba(245, 158, 11, 0.15);
   }
+
+  .budget-note {
+    background-color: #fef08a;
+    color: #713f12;
+    border: 2px solid #fde047;
+    border-radius: 4px;
+    padding: 20px;
+    box-shadow: 2px 6px 18px rgba(0, 0, 0, 0.1);
+  }
+  .dark .budget-note {
+    background-color: #451a03;
+    color: #fef3c7;
+    border-color: #78350f;
+  }
+
+  .saku-bubble {
+    background-color: var(--saku-green-soft);
+    color: var(--saku-green);
+    border: 2px solid var(--saku-green);
+    border-radius: 28px 28px 28px 6px;
+    padding: 16px 20px;
+    font-weight: 700;
+  }
+
+  .pocket-card {
+    background-color: var(--saku-paper-soft);
+    border: 3px solid var(--saku-line);
+    border-radius: 32px;
+    padding: 28px;
+    box-shadow: var(--saku-shadow-soft);
+  }
+
+  .soft-float {
+    animation: float 4.5s ease-in-out infinite;
+  }
+}
+
+/* Disable motion for reduced-motion preference */
+@media (prefers-reduced-motion: reduce) {
+  *, ::before, ::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* ==========================================================================
+   PREMIUM MOTION LAYER — GSAP + anime.js + three.js
+   ========================================================================== */
+
+/* Kinetic headline reveal masks */
+.hero-mask {
+  display: inline-block;
+  overflow: hidden;
+  vertical-align: top;
+  padding-bottom: 0.08em;
+}
+.hero-word {
+  display: inline-block;
+  will-change: transform;
+}
+
+/* Aurora glow behind the 3D hero scene */
+.aurora {
+  position: absolute;
+  inset: -20%;
+  pointer-events: none;
+  background:
+    radial-gradient(40% 50% at 20% 30%, rgba(16, 152, 104, 0.22), transparent 60%),
+    radial-gradient(38% 46% at 82% 24%, rgba(245, 158, 11, 0.2), transparent 62%),
+    radial-gradient(50% 50% at 60% 85%, rgba(46, 204, 143, 0.16), transparent 60%);
+  filter: blur(24px);
+  animation: aurora-drift 16s ease-in-out infinite alternate;
+}
+@keyframes aurora-drift {
+  0% {
+    transform: translate3d(0, 0, 0) scale(1);
+  }
+  100% {
+    transform: translate3d(0, -3%, 0) scale(1.08);
+  }
+}
+
+/* Fine film grain overlay */
+.grain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  opacity: 0.05;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='2'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+  mix-blend-mode: overlay;
+}
+
+/* Animated gradient text accent */
+.text-gradient {
+  background: linear-gradient(
+    100deg,
+    var(--saku-green) 0%,
+    var(--saku-coin) 60%,
+    var(--saku-green) 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+  animation: text-shimmer 6s linear infinite;
+}
+@keyframes text-shimmer {
+  to {
+    background-position: 200% center;
+  }
+}
+
+.magnetic {
+  will-change: transform;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .aurora,
+  .text-gradient {
+    animation: none !important;
+  }
+  .text-gradient {
+    background-position: 0 center;
+  }
+}
+
+/* ===== Custom landing cursor (Saku) ===== */
+.saku-cursor-dot,
+.saku-cursor-ring,
+.saku-cursor-glow {
+  position: fixed;
+  top: 0;
+  left: 0;
+  pointer-events: none;
+  z-index: 9999;
+  transform: translate3d(-200px, -200px, 0);
+  will-change: transform;
+}
+.saku-cursor-dot {
+  width: 8px;
+  height: 8px;
+  margin: -4px 0 0 -4px;
+  border-radius: 9999px;
+  background: #2ee6a8;
+  box-shadow: 0 0 12px 2px rgba(46, 230, 168, 0.9);
+}
+.saku-cursor-ring {
+  width: 38px;
+  height: 38px;
+  margin: -19px 0 0 -19px;
+  border-radius: 9999px;
+  border: 2px solid rgba(16, 152, 104, 0.65);
+  transition:
+    width 0.2s ease,
+    height 0.2s ease,
+    margin 0.2s ease,
+    border-color 0.2s ease;
+}
+.saku-cursor-ring.is-hover {
+  width: 62px;
+  height: 62px;
+  margin: -31px 0 0 -31px;
+  border-color: rgba(245, 185, 55, 0.9);
+}
+.saku-cursor-ring.is-down {
+  width: 26px;
+  height: 26px;
+  margin: -13px 0 0 -13px;
+}
+.saku-cursor-glow {
+  width: 240px;
+  height: 240px;
+  margin: -120px 0 0 -120px;
+  border-radius: 9999px;
+  background: radial-gradient(
+    circle,
+    rgba(46, 230, 168, 0.16),
+    rgba(46, 230, 168, 0) 62%
+  );
 }

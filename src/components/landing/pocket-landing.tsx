@@ -100,7 +100,7 @@ function LandingInner({ authEnabled }: { authEnabled: boolean }) {
   return (
     <main
       ref={root}
-      className="grain relative min-h-[100svh] w-full overflow-hidden bg-[#070e1c] text-[#f8fafc] dark selection:bg-[#109868]/30"
+      className="grain relative h-[100svh] max-h-[100svh] w-full overflow-hidden bg-[#070e1c] text-[#f8fafc] dark selection:bg-[#109868]/30"
     >
       <div className="aurora" aria-hidden />
       <CursorGlow />
@@ -141,7 +141,7 @@ function LandingInner({ authEnabled }: { authEnabled: boolean }) {
       </nav>
 
       {/* ===================== HERO (single screen) ===================== */}
-      <div className="relative mx-auto grid min-h-[100svh] max-w-7xl grid-cols-1 items-center gap-4 px-4 pb-24 pt-24 lg:grid-cols-2 lg:gap-8 lg:pb-16 lg:pt-0">
+      <div className="relative mx-auto grid h-full max-w-7xl grid-cols-1 items-center gap-4 px-4 lg:grid-cols-2 lg:gap-8">
         {/* Copy: top on mobile, right on desktop */}
         <div className="relative z-30 order-1 text-center lg:order-2 lg:text-left">
           <div
@@ -209,14 +209,14 @@ function LandingInner({ authEnabled }: { authEnabled: boolean }) {
         </div>
 
         {/* 3D cursor-following robot: bottom on mobile, left on desktop */}
-        <div className="relative order-2 h-[40vh] min-h-[260px] lg:order-1 lg:h-[100svh]">
+        <div className="relative order-2 h-[45vh] lg:order-1 lg:h-full">
           <HeroMascot />
         </div>
 
-        {/* Feature mini-cards: absolutely centred at the bottom of the hero */}
+        {/* Feature mini-cards: centered horizontally, raised slightly above bottom */}
         <div
           data-hero-fade
-          className="absolute bottom-5 left-1/2 z-30 -translate-x-1/2"
+          className="absolute bottom-12 left-1/2 z-30 -translate-x-1/2"
         >
           <FeatureCards />
         </div>

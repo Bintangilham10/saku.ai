@@ -324,7 +324,7 @@ export default function HeroMascot() {
         metalness: 0.4,
       }),
     );
-    const bankFloor = new THREE.Mesh(track(new THREE.CylinderGeometry(14, 14, 0.15, 36)), bankFloorMat);
+    const bankFloor = new THREE.Mesh(track(new THREE.CylinderGeometry(24, 24, 0.15, 36)), bankFloorMat);
     bankFloor.position.y = -2.68;
     mascot.add(bankFloor);
 
@@ -350,17 +350,64 @@ export default function HeroMascot() {
       pGroup.add(pBase, pCol, pCap);
     });
 
-    // Reinforced Vault Wall in background
+    // Reinforced Vault Wall in background (super wide & blended to prevent cutoff)
     const vaultWallMat = trackM(
       new THREE.MeshStandardMaterial({
-        color: 0x1e293b,
+        color: 0x0f172a,
         metalness: 0.8,
         roughness: 0.45,
       }),
     );
-    const vaultWall = new THREE.Mesh(track(new THREE.BoxGeometry(9.6, 8, 0.2)), vaultWallMat);
+    const vaultWall = new THREE.Mesh(track(new THREE.BoxGeometry(32, 10, 0.2)), vaultWallMat);
     vaultWall.position.set(0, 1.0, -4.6);
     mascot.add(vaultWall);
+
+    // ===================== GOLD VAULT STACK & AI SECURITY CRYSTAL (Kiri Maskot) =====================
+    const goldVaultGroup = new THREE.Group();
+    goldVaultGroup.position.set(-2.5, -2.1, -1.0);
+    goldVaultGroup.rotation.y = 0.45;
+    mascot.add(goldVaultGroup);
+
+    const goldMat = trackM(new THREE.MeshStandardMaterial({ color: 0xffd700, roughness: 0.18, metalness: 0.85 }));
+    const palletMat = trackM(new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.7 }));
+
+    // Steel pallet base
+    const pallet = new THREE.Mesh(track(new THREE.BoxGeometry(1.6, 0.15, 1.2)), palletMat);
+    pallet.position.y = 0.075;
+    goldVaultGroup.add(pallet);
+
+    // Stack of gold bars (pyramid formation)
+    const barGeo = track(new THREE.BoxGeometry(0.38, 0.12, 0.22));
+    [
+      [-0.4, 0.2, -0.25], [0, 0.2, -0.25], [0.4, 0.2, -0.25],
+      [-0.4, 0.2, 0.25],  [0, 0.2, 0.25],  [0.4, 0.2, 0.25]
+    ].forEach(([bx, by, bz]) => {
+      const bar = new THREE.Mesh(barGeo, goldMat);
+      bar.position.set(bx, by, bz);
+      goldVaultGroup.add(bar);
+    });
+    [
+      [-0.2, 0.32, 0], [0.2, 0.32, 0], [0, 0.32, -0.2]
+    ].forEach(([bx, by, bz]) => {
+      const bar = new THREE.Mesh(barGeo, goldMat);
+      bar.position.set(bx, by, bz);
+      bar.rotation.y = 0.2;
+      goldVaultGroup.add(bar);
+    });
+    const topBar = new THREE.Mesh(barGeo, goldMat);
+    topBar.position.set(0, 0.44, 0);
+    topBar.rotation.y = -0.3;
+    goldVaultGroup.add(topBar);
+
+    // Floating AI Security Crystal above the gold stack
+    const crystalMat = trackM(new THREE.MeshStandardMaterial({ color: 0x2ee6a8, roughness: 0.1, metalness: 0.2, emissive: 0x109868, emissiveIntensity: 1 }));
+    const securityCrystal = new THREE.Mesh(track(new THREE.OctahedronGeometry(0.35)), crystalMat);
+    securityCrystal.position.set(0, 1.3, 0);
+    goldVaultGroup.add(securityCrystal);
+
+    const crystalLight = new THREE.PointLight(0x2ee6a8, 6, 8);
+    crystalLight.position.set(0, 1.3, 0);
+    goldVaultGroup.add(crystalLight);
 
     // ===================== POLICE CAR (mobil polisi dengan lampu bergerak) =====================
     const policeGroup = new THREE.Group();
@@ -420,66 +467,6 @@ export default function HeroMascot() {
     policeLightB.position.set(0.05, 1.6, 0);
     policeGroup.add(policeLightR, policeLightB);
 
-    // ---- Eye lasers + impact glow ----
-    const UP = new THREE.Vector3(0, 1, 0);
-    const beamMat = trackM(
-      new THREE.MeshBasicMaterial({
-        color: 0x2ee6a8,
-        transparent: true,
-        opacity: 0.6,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    const beamGeo = track(new THREE.CylinderGeometry(0.03, 0.012, 1, 12));
-    const beamL = new THREE.Mesh(beamGeo, beamMat);
-    const beamR = new THREE.Mesh(beamGeo, beamMat);
-    scene.add(beamL, beamR);
-
-    const impactMat = trackM(
-      new THREE.MeshBasicMaterial({
-        color: 0xc8ffee,
-        transparent: true,
-        opacity: 0.95,
-        blending: THREE.AdditiveBlending,
-        depthWrite: false,
-      }),
-    );
-    const impact = new THREE.Mesh(
-      track(new THREE.SphereGeometry(0.13, 18, 18)),
-      impactMat,
-    );
-    scene.add(impact);
-    const halo = new THREE.Mesh(
-      track(new THREE.SphereGeometry(0.26, 18, 18)),
-      trackM(
-        new THREE.MeshBasicMaterial({
-          color: 0x2ee6a8,
-          transparent: true,
-          opacity: 0.35,
-          blending: THREE.AdditiveBlending,
-          depthWrite: false,
-        }),
-      ),
-    );
-    scene.add(halo);
-
-    const eyeWL = new THREE.Vector3();
-    const eyeWR = new THREE.Vector3();
-    const laserTarget = new THREE.Vector3();
-    const rayDir = new THREE.Vector3();
-    const orientBeam = (
-      mesh: THREE.Mesh,
-      from: THREE.Vector3,
-      to: THREE.Vector3,
-    ) => {
-      rayDir.subVectors(to, from);
-      const len = rayDir.length() || 0.0001;
-      mesh.position.copy(from).addScaledVector(rayDir, 0.5);
-      mesh.scale.set(1, len, 1);
-      mesh.quaternion.setFromUnitVectors(UP, rayDir.normalize());
-    };
-
     // ---- Pointer + animation ----
     // NDC relative to the canvas (not the window) so lasers land on the cursor.
     const pointer = { x: 0, y: 0 };
@@ -526,23 +513,6 @@ export default function HeroMascot() {
       eyeGroup.position.x = pointer.x * 0.04;
       eyeGroup.position.y = pointer.y * 0.03;
 
-      // Lasers from the eyes to the cursor.
-      laserTarget.set(pointer.x, pointer.y, 0.5).unproject(camera);
-      rayDir.copy(laserTarget).sub(camera.position).normalize();
-      const reach = (3.2 - camera.position.z) / rayDir.z;
-      laserTarget.copy(camera.position).addScaledVector(rayDir, reach);
-      eyeL.getWorldPosition(eyeWL);
-      eyeR.getWorldPosition(eyeWR);
-      orientBeam(beamL, eyeWL, laserTarget);
-      orientBeam(beamR, eyeWR, laserTarget);
-      impact.position.copy(laserTarget);
-      halo.position.copy(laserTarget);
-      const flick = 0.55 + Math.random() * 0.25 + Math.sin(t * 28) * 0.12;
-      beamMat.opacity = 0.4 + flick * 0.4;
-      impact.scale.setScalar(0.85 + Math.sin(t * 20) * 0.2 + Math.random() * 0.12);
-      halo.scale.setScalar(1 + Math.sin(t * 6) * 0.18);
-      eyeMat.emissiveIntensity = 2 + flick;
-
       robot.rotation.y = pointer.x * 0.12;
       robot.position.y = 0.05 + Math.sin(t * 1.4) * 0.04;
       antBall.position.x = Math.sin(t * 2.2) * 0.04;
@@ -563,6 +533,11 @@ export default function HeroMascot() {
       sirenRedMat.emissiveIntensity = sirenStrobe ? 5 : 0.2;
       sirenBlueMat.emissiveIntensity = !sirenStrobe ? 5 : 0.2;
       policeGroup.position.y = -2.1 + Math.sin(t * 28) * 0.007; // Engine idle vibration
+
+      // Animate AI Security Crystal over the gold pile
+      securityCrystal.rotation.y = t * 1.5;
+      securityCrystal.position.y = 1.3 + Math.sin(t * 3) * 0.1;
+      crystalLight.intensity = 4 + Math.sin(t * 5) * 2;
 
       renderer.render(scene, camera);
       if (!prefersReduced) raf = requestAnimationFrame(render);
